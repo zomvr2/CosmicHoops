@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -7,9 +8,10 @@ import { collection, query, where, orderBy, getDocs, doc, updateDoc, writeBatch,
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Loader2, CheckCircle, XCircle, MessageSquareText, Users } from 'lucide-react';
+import { Bell, Loader2, CheckCircle, XCircle, MessageSquareText, Users, Swords } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from "@/lib/utils";
 
 
 interface Notification {
@@ -90,7 +92,7 @@ export default function NotificationsPage() {
 
       if (confirmed) {
         const winnerId = matchData.player1Score > matchData.player2Score ? matchData.player1Id : matchData.player2Id;
-        const loserId = matchData.player1Score < matchData.player2Score ? matchData.player1Id : matchData.player2Id;
+        // const loserId = matchData.player1Score < matchData.player2Score ? matchData.player1Id : matchData.player2Id;
         const auraChange = 10; // Example Aura points
 
         // Update match status and winner
@@ -158,8 +160,8 @@ export default function NotificationsPage() {
       await batch.commit();
 
       toast({ title: "Match Update", description: `Match ${confirmed ? 'confirmed' : 'rejected'} successfully.` });
-      // Refresh notifications list
-      setNotifications(prev => prev.filter(n => n.id !== notification.id || (n.id === notification.id && n.type !== 'match_invite')));
+      // Refresh notifications list by removing the handled one (or filtering based on its new state if updated)
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
 
 
     } catch (error: any) {
@@ -176,8 +178,8 @@ export default function NotificationsPage() {
       case 'match_invite': return <Swords className="h-5 w-5 text-yellow-500" />;
       case 'match_confirmed': return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'recap_ready': return <MessageSquareText className="h-5 w-5 text-blue-400" />;
-      case 'friend_request': return <UserPlus className="h-5 w-5 text-purple-400" />;
-      case 'friend_accepted': return <Users className="h-5 w-5 text-pink-400" />;
+      case 'friend_request': return <Users className="h-5 w-5 text-purple-400" />; // Changed icon for friend_request
+      case 'friend_accepted': return <CheckCircle className="h-5 w-5 text-pink-400" />; // Changed icon for friend_accepted
       default: return <Bell className="h-5 w-5 text-gray-400" />;
     }
   }
@@ -273,3 +275,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
