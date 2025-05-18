@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, type FormEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -12,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Swords } from 'lucide-react';
 import type { User as FirebaseUser } from 'firebase/auth';
+import Link from 'next/link'; // Added Link import
 
 interface Friend {
   id: string;
@@ -98,7 +100,7 @@ export default function StartMatchPage() {
       // Create notification for player 2
       const notificationData = {
         userId: selectedFriendId, // Recipient
-        type: 'match_invite',
+        type: 'match_invite' as 'match_invite',
         message: `${user.displayName || 'A player'} has logged a match with you. Please confirm.`,
         relatedId: matchRef.id, // ID of the match document
         isRead: false,
