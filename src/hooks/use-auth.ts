@@ -7,16 +7,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { auth } from "@/lib/firebase";
 
 // Interface for the context value
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   isLoggedIn: boolean;
 }
 
-// Create the context with an initial undefined value
-// It's important that the default value matches the AuthContextType or is undefined
-// and handled appropriately in the hook.
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Define a default value for the context that matches AuthContextType
+const defaultAuthContextValue: AuthContextType = {
+  user: null,
+  loading: true,
+  isLoggedIn: false,
+};
+
+// Create the context with the default value.
+const AuthContext = createContext<AuthContextType>(defaultAuthContextValue);
 
 // AuthProvider component
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -30,9 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+  }, []); // Empty dependency array ensures this runs once on mount
 
-  // Explicitly define the value for the provider
+  // Define the value for the provider
   const providerValue: AuthContextType = {
     user,
     loading,
@@ -49,9 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 // Custom hook to use the auth context
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    // This error is thrown if useAuth is used outside of an AuthProvider
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  // The context should always be available if useAuth is used within AuthProvider
+  // The default value in createContext ensures context is never undefined.
   return context;
 }
