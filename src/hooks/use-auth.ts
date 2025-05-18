@@ -26,8 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  const providerValue: AuthContextType = {
+    user,
+    loading,
+    isLoggedIn: !!user,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isLoggedIn: !!user }}>
+    <AuthContext.Provider value={providerValue}>
       {children}
     </AuthContext.Provider>
   );
