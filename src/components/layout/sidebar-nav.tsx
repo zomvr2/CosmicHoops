@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -108,7 +109,7 @@ export function SidebarNav() {
         </Tooltip>
         {user && (
           <div className="px-4 py-2 border-t border-border mt-2 text-sm text-muted-foreground">
-            <p className="font-semibold text-foreground">{user.displayName || "User"}</p>
+            <p className="font-semibold text-foreground">@{user.displayName || "User"}</p>
             <p className="truncate">{user.email}</p>
           </div>
         )}
