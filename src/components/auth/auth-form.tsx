@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -9,7 +10,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,14 +42,31 @@ export function AuthForm() {
           setIsLoading(false);
           return;
         }
+
+        // Check if display name is unique
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("displayName", "==", displayName.trim()));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          setError("Display name already taken. Please choose another.");
+          setIsLoading(false);
+          toast({
+            title: "Signup Error",
+            description: "Display name already taken.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName });
+        await updateProfile(userCredential.user, { displayName: displayName.trim() });
         
         // Create user document in Firestore
         await setDoc(doc(db, "users", userCredential.user.uid), {
           uid: userCredential.user.uid,
           email: userCredential.user.email,
-          displayName: displayName,
+          displayName: displayName.trim(),
           aura: 0,
           createdAt: new Date().toISOString(),
           friends: [],
@@ -59,10 +77,10 @@ export function AuthForm() {
           title: "Account Created!",
           description: "Please check your email to verify your account.",
         });
-        router.push("/dashboard"); // Or a page prompting to check email
-      } else {
+        router.push("/dashboard"); 
+      } else { // Login mode
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        if (!userCredential.user.emailVerified && mode === 'login') {
+        if (!userCredential.user.emailVerified) {
           toast({
             title: "Email not verified",
             description: "Please verify your email before logging in. A new verification email has been sent.",
@@ -76,10 +94,37 @@ export function AuthForm() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      setError(err.message || "An unknown error occurred.");
+      // Handle Firebase specific errors more gracefully
+      let errorMessage = "An unknown error occurred.";
+      if (err.code) {
+        switch (err.code) {
+          case "auth/email-already-in-use":
+            errorMessage = "This email address is already in use by another account.";
+            break;
+          case "auth/invalid-email":
+            errorMessage = "The email address is not valid.";
+            break;
+          case "auth/operation-not-allowed":
+            errorMessage = "Email/password accounts are not enabled.";
+            break;
+          case "auth/weak-password":
+            errorMessage = "The password is too weak.";
+            break;
+          case "auth/user-not-found":
+          case "auth/wrong-password":
+          case "auth/invalid-credential": // For newer Firebase versions
+            errorMessage = "Invalid login credentials. Please check your email and password.";
+            break;
+          default:
+            errorMessage = err.message || "Failed to authenticate.";
+        }
+      } else {
+        errorMessage = err.message || "Failed to authenticate.";
+      }
+      setError(errorMessage);
       toast({
         title: "Authentication Error",
-        description: err.message || "Failed to authenticate.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
