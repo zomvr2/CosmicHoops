@@ -38,7 +38,7 @@ export function AuthForm() {
     try {
       if (mode === "signup") {
         if (!displayName.trim()) {
-          setError("Display name is required.");
+          setError("Username is required.");
           setIsLoading(false);
           return;
         }
@@ -49,11 +49,11 @@ export function AuthForm() {
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-          setError("Display name already taken. Please choose another.");
+          setError("Username already taken. Please choose another.");
           setIsLoading(false);
           toast({
             title: "Signup Error",
-            description: "Display name already taken.",
+            description: "Username already taken.",
             variant: "destructive",
           });
           return;
@@ -146,7 +146,7 @@ export function AuthForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {mode === "signup" && (
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <Label htmlFor="displayName">Username</Label>
               <Input
                 id="displayName"
                 type="text"
@@ -204,3 +204,4 @@ export function AuthForm() {
     </Card>
   );
 }
+
