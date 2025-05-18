@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { Progress } from "@/components/ui/progress"; // Added Progress import
 
 interface UserProfileData {
   uid: string;
@@ -36,22 +38,46 @@ interface MatchData {
   recap?: string;
 }
 
+interface H2HStats {
+  currentUserWins: number;
+  viewedUserWins: number;
+  totalPlayed: number;
+}
+
 export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
   const { user: currentUser, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  const userId = params.userId === 'me' ? currentUser?.uid : params.userId as string;
+  const userIdFromParams = params.userId === 'me' ? currentUser?.uid : params.userId as string;
 
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false); // For future edit functionality
 
+  const [h2hStats, setH2hStats] = useState<H2HStats | null>(null);
+  const [isLoadingH2H, setIsLoadingH2H] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(userIdFromParams);
+
+  useEffect(() => {
+    // Update userId state if currentUser loads and params.userId is 'me'
+    if (params.userId === 'me' && currentUser) {
+      setUserId(currentUser.uid);
+    } else if (params.userId !== 'me') {
+      setUserId(params.userId as string);
+    }
+  }, [params.userId, currentUser]);
+
+
   useEffect(() => {
     if (!userId) {
-      if (!authLoading) router.push('/auth'); // Redirect if no user and auth is resolved
+      if (!authLoading && params.userId === 'me' && !currentUser) { // If 'me' and no user after auth
+        router.push('/auth');
+      } else if (!authLoading && params.userId !== 'me') { // If specific ID and no user ID yet, wait or handle
+         // Potentially could show loader here or rely on main isLoading
+      }
       return;
     }
 
@@ -65,11 +91,10 @@ export default function UserProfilePage() {
           setProfileData({ uid: userDocSnap.id, ...userDocSnap.data() } as UserProfileData);
         } else {
           toast({ title: "Error", description: "User profile not found.", variant: "destructive" });
-          router.push('/dashboard'); // Or a 404 page
+          router.push('/dashboard'); 
           return;
         }
 
-        // Fetch match history involving this user
         const q1 = query(collection(db, 'matches'), where('player1Id', '==', userId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         const q2 = query(collection(db, 'matches'), where('player2Id', '==', userId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         
@@ -77,15 +102,13 @@ export default function UserProfilePage() {
         
         const matches: MatchData[] = [];
         snap1.forEach(doc => matches.push({ id: doc.id, ...doc.data() } as MatchData));
-        snap2.forEach(doc => { // Avoid duplicates if a user plays against themselves (though unlikely)
+        snap2.forEach(doc => { 
           if (!matches.find(m => m.id === doc.id)) {
             matches.push({ id: doc.id, ...doc.data()} as MatchData);
           }
         });
         
-        // Sort all matches by date
         matches.sort((a,b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
-
         setMatchHistory(matches);
 
       } catch (error) {
@@ -97,13 +120,86 @@ export default function UserProfilePage() {
     };
 
     fetchProfileData();
-  }, [userId, toast, router, authLoading]);
+  }, [userId, toast, router, authLoading, currentUser, params.userId]);
 
-  if (isLoading || authLoading) {
+
+  // useEffect for Head-to-Head stats
+  useEffect(() => {
+    const fetchH2HStats = async () => {
+      if (!profileData || !currentUser || profileData.uid === currentUser.uid) {
+        setH2hStats(null); // Not applicable or own profile
+        return;
+      }
+
+      setIsLoadingH2H(true);
+      try {
+        const currentUserId = currentUser.uid;
+        const viewedUserId = profileData.uid;
+
+        const q1 = query(
+          collection(db, 'matches'),
+          where('player1Id', '==', currentUserId),
+          where('player2Id', '==', viewedUserId),
+          where('status', '==', 'confirmed')
+        );
+        const q2 = query(
+          collection(db, 'matches'),
+          where('player1Id', '==', viewedUserId),
+          where('player2Id', '==', currentUserId),
+          where('status', '==', 'confirmed')
+        );
+
+        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        
+        const h2hMatchesRaw: MatchData[] = [];
+        snap1.forEach(doc => h2hMatchesRaw.push({ id: doc.id, ...doc.data() } as MatchData));
+        snap2.forEach(doc => h2hMatchesRaw.push({ id: doc.id, ...doc.data() } as MatchData));
+        
+        // Deduplicate if any match somehow got fetched twice (shouldn't happen with these specific queries)
+        const h2hMatchIds = new Set<string>();
+        const h2hMatches = h2hMatchesRaw.filter(match => {
+            if (h2hMatchIds.has(match.id)) return false;
+            h2hMatchIds.add(match.id);
+            return true;
+        });
+
+
+        let currentUserWins = 0;
+        let viewedUserWins = 0;
+        h2hMatches.forEach(match => {
+          if (match.winnerId === currentUserId) {
+            currentUserWins++;
+          } else if (match.winnerId === viewedUserId) {
+            viewedUserWins++;
+          }
+        });
+
+        setH2hStats({
+          currentUserWins,
+          viewedUserWins,
+          totalPlayed: h2hMatches.length,
+        });
+
+      } catch (error) {
+        console.error("Error fetching H2H stats:", error);
+        toast({ title: "H2H Error", description: "Could not load head-to-head stats.", variant: "destructive" });
+        setH2hStats(null);
+      } finally {
+        setIsLoadingH2H(false);
+      }
+    };
+
+    if (profileData && currentUser) { // Ensure data is available before fetching H2H
+        fetchH2HStats();
+    }
+  }, [profileData, currentUser, toast]);
+
+  if (isLoading || authLoading || !userId) { // Check !userId as well
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
 
   if (!profileData) {
+    // This case should be handled by the redirect in fetchProfileData, but as a fallback:
     return <div className="text-center py-10">User not found or an error occurred.</div>;
   }
 
@@ -140,7 +236,6 @@ export default function UserProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Placeholder for Head-to-Head Stats if viewing another user's profile */}
       {!isOwnProfile && currentUser && (
         <Card className="bg-card/50">
           <CardHeader>
@@ -148,8 +243,43 @@ export default function UserProfilePage() {
             <CardDescription>Your battle record against this cosmic warrior.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Head-to-head stats coming soon!</p>
-            {/* TODO: Calculate and display H2H stats */}
+            {isLoadingH2H ? (
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : h2hStats && h2hStats.totalPlayed > 0 ? (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total Matches:</span>
+                  <span className="font-semibold">{h2hStats.totalPlayed}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Your Wins:</span>
+                  <span className="font-semibold text-green-400">{h2hStats.currentUserWins}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{profileData.displayName}'s Wins:</span>
+                  <span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span>
+                </div>
+                {h2hStats.totalPlayed > 0 && (
+                  <div className="pt-2">
+                    <Progress 
+                      value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} 
+                      className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" // Custom gradient for progress
+                      aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`}
+                    />
+                     <div className="flex justify-between text-xs mt-1">
+                       <span className="text-green-400">You ({h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                       <span className="text-red-400">{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : h2hStats && h2hStats.totalPlayed === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No matches played against each other yet.</p>
+            ) : !isLoadingH2H ? ( 
+              <p className="text-muted-foreground text-center py-4">Could not load head-to-head stats.</p>
+            ) : null}
           </CardContent>
         </Card>
       )}
@@ -157,7 +287,7 @@ export default function UserProfilePage() {
       <Card className="bg-card/50">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center" id="match-history"><Swords className="mr-2 h-6 w-6 text-accent" />Match History</CardTitle>
-          <CardDescription>Chronicles of past celestial clashes.</CardDescription>
+          <CardDescription>Chronicles of past celestial clashes for {profileData.displayName}.</CardDescription>
         </CardHeader>
         <CardContent>
           {matchHistory.length === 0 ? (
@@ -165,21 +295,22 @@ export default function UserProfilePage() {
           ) : (
             <ul className="space-y-4">
               {matchHistory.map(match => {
-                const opponentName = match.player1Id === userId ? match.player2Name : match.player1Name;
-                const opponentId = match.player1Id === userId ? match.player2Id : match.player1Id;
-                const userScore = match.player1Id === userId ? match.player1Score : match.player2Score;
-                const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
-                const didWin = match.winnerId === userId;
+                const isPlayer1ProfileUser = match.player1Id === profileData.uid;
+                const opponentName = isPlayer1ProfileUser ? match.player2Name : match.player1Name;
+                const opponentId = isPlayer1ProfileUser ? match.player2Id : match.player1Id;
+                const profileUserScore = isPlayer1ProfileUser ? match.player1Score : match.player2Score;
+                const opponentScore = isPlayer1ProfileUser ? match.player2Score : match.player1Score;
+                const didProfileUserWin = match.winnerId === profileData.uid;
 
                 return (
                   <li key={match.id} className="p-4 bg-muted/30 rounded-lg shadow-md hover:shadow-primary/30 transition-shadow">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                       <div>
                         <p className="text-lg font-semibold">
-                          vs <Link href={`/profile/${opponentId}`} className="text-accent hover:underline">{opponentName}</Link>
+                          vs <Link href={`/profile/${opponentId}`} className="text-accent hover:underline">{opponentName || "Unknown Player"}</Link>
                         </p>
-                        <p className={`text-xl font-bold ${didWin ? 'text-green-400' : 'text-red-400'}`}>
-                          {didWin ? 'Victory' : 'Defeat'} ({userScore} - {opponentScore})
+                        <p className={`text-xl font-bold ${didProfileUserWin ? 'text-green-400' : 'text-red-400'}`}>
+                          {didProfileUserWin ? 'Victory' : 'Defeat'} ({profileUserScore} - {opponentScore})
                         </p>
                         <p className="text-xs text-muted-foreground">
                            {match.createdAt?.toDate ? formatDistanceToNow(match.createdAt.toDate(), { addSuffix: true }) : 'A while ago'}
@@ -206,3 +337,4 @@ export default function UserProfilePage() {
     </div>
   );
 }
+
