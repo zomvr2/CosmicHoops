@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
@@ -27,15 +28,13 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const allNavItems: NavItem[] = [
+const mainNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/start-match", label: "Start Match", icon: Swords },
   { href: "/friends", label: "Friends", icon: Users },
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
-const startMatchItem = allNavItems.find(item => item.label === "Start Match")!;
-const mainNavItems = allNavItems.filter(item => item.label !== "Start Match");
+const startMatchItem: NavItem = { href: "/start-match", label: "Start Match", icon: Swords };
 
 
 export function SidebarNav() {
@@ -74,21 +73,14 @@ export function SidebarNav() {
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-card border-r border-border fixed top-0 left-0 h-full z-40 p-4">
-      <div className="px-2 pt-2 mb-6"> {/* Added mb-6 for spacing */}
+      <div className="px-2 pt-2 mb-4"> 
         <Link href="/dashboard">
           <Logo size="small" />
         </Link>
       </div>
-      
-      <nav className="flex-grow space-y-2">
-        <p className="px-4 text-xs text-muted-foreground uppercase tracking-wider">Main</p>
-        {mainNavItems.map((item) => renderNavItem(item))}
-      </nav>
 
-      <div className="mt-auto space-y-2">
-        {startMatchItem && renderNavItem(startMatchItem, true)}
-        {user && (
-          <div className="px-1 py-2 border-t border-border text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
+      {user && (
+        <div className="px-1 py-3 mb-2 text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
             <Link href="/profile/me" className="flex items-center space-x-3 flex-grow overflow-hidden cursor-pointer pl-1 py-1">
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={user.photoURL || DEFAULT_AVATAR_URL} alt={user.displayName || 'User Avatar'} />
@@ -110,7 +102,7 @@ export function SidebarNav() {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="end" className="w-48">
+              <DropdownMenuContent side="bottom" align="end" className="w-48">
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
@@ -119,6 +111,15 @@ export function SidebarNav() {
             </DropdownMenu>
           </div>
         )}
+      
+      <Separator className="my-2" />
+      
+      <nav className="flex-grow space-y-1.5 pt-2">
+        {mainNavItems.map((item) => renderNavItem(item))}
+      </nav>
+
+      <div className="mt-auto space-y-2 pt-2">
+        {renderNavItem(startMatchItem, true)}
       </div>
     </aside>
   );

@@ -3,25 +3,46 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Swords, Users, Bell, UserCircle } from "lucide-react";
+import { Home, Swords, Users, Bell, UserCircle, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
-import React from "react"; // Import React for React.Fragment
+import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+import { Button } from "../ui/button";
+
+const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  action?: () => void; // Optional action for items like logout
 }
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user } = useAuth(); // Get user for avatar
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push("/");
+  };
 
   const regularNavItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/friends", label: "Friends", icon: Users },
     { href: "/notifications", label: "Notifications", icon: Bell },
-    { href: "/profile/me", label: "Profile", icon: UserCircle },
+    { href: "/profile/me", label: "Profile", icon: UserCircle }, // Icon is placeholder, will be replaced by Avatar
   ];
 
   const startMatchItem: NavItem = { href: "/start-match", label: "Start Match", icon: Swords };
@@ -30,49 +51,81 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-md border-t border-border shadow-t-lg md:hidden z-50 h-16">
       <ul className="flex justify-around items-center h-full px-1">
         {regularNavItems.map((item, index) => {
-          const isActive = pathname === item.href ||
-                           (item.href === "/dashboard" && pathname.startsWith("/dashboard")) ||
-                           (item.href === "/profile/me" && pathname.startsWith("/profile"));
+          const isActive =
+            pathname === item.href ||
+            (item.href === "/dashboard" && pathname.startsWith("/dashboard")) ||
+            (item.href === "/profile/me" && pathname.startsWith("/profile"));
 
-          const itemContent = (
-            <>
-              <item.icon
-                className={cn(
-                  "h-6 w-6 mb-0.5 transition-colors",
-                  isActive ? "text-primary text-glow-primary" : "text-muted-foreground hover:text-foreground"
-                )}
-              />
-              <span
-                className={cn(
-                  "text-xs transition-colors",
-                  isActive ? "text-primary font-medium" : "text-muted-foreground"
-                )}
-              >
-                {item.label}
-              </span>
-            </>
-          );
+          let itemContent;
 
-          // Spacer logic for the central lifted button
-          // We expect 4 regular items. Spacer after 2nd item (index 1).
-          if (index === 1) { // After "Friends"
+          if (item.label === "Profile") {
+            // Special rendering for Profile item using Avatar
+            itemContent = (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "flex flex-col items-center justify-center p-1 rounded-md w-full h-full transition-colors focus-visible:ring-0 focus-visible:ring-offset-0",
+                      // No specific active styling for the trigger itself, menu indicates context
+                      "text-muted-foreground hover:text-foreground"
+                    )}
+                    aria-label="Profile Menu"
+                  >
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={user?.photoURL || DEFAULT_AVATAR_URL} alt={user?.displayName || "User Avatar"}/>
+                      <AvatarFallback>{user?.displayName?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                    </Avatar>
+                    {/* Optional: Small label if desired, or remove for icon-only */}
+                    {/* <span className="text-[10px] mt-0.5">Me</span> */}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align="center" className="mb-2 w-40">
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/profile/me" className="w-full flex items-center">
+                      <UserCircle className="mr-2 h-4 w-4" /> View Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center">
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          } else {
+            // Standard rendering for other items
+            itemContent = (
+              <Link href={item.href} className="flex flex-col items-center justify-center p-2 rounded-md w-full h-full">
+                <item.icon
+                  className={cn(
+                    "h-6 w-6 mb-0.5 transition-colors",
+                    isActive ? "text-primary text-glow-primary" : "text-muted-foreground hover:text-foreground"
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-xs transition-colors",
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          }
+          
+          if (index === 1) { // After "Friends" to make space for central button
             return (
               <React.Fragment key={item.href + "_fragment"}>
-                <li key={item.href} className="flex-1 text-center">
-                  <Link href={item.href} className="flex flex-col items-center justify-center p-2 rounded-md">
-                    {itemContent}
-                  </Link>
-                </li>
+                <li className="flex-1 text-center h-full">{itemContent}</li>
                 <li key="spacer" className="w-14 h-full" aria-hidden="true" />
               </React.Fragment>
             );
           }
 
           return (
-            <li key={item.href} className="flex-1 text-center">
-              <Link href={item.href} className="flex flex-col items-center justify-center p-2 rounded-md">
-                {itemContent}
-              </Link>
+            <li key={item.href} className="flex-1 text-center h-full">
+              {itemContent}
             </li>
           );
         })}
