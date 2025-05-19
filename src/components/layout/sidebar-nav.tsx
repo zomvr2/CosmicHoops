@@ -91,7 +91,7 @@ export function SidebarNav() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                   aria-label="Open user menu"
                 >
                   <MoreVertical className="h-4 w-4" />

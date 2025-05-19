@@ -92,8 +92,9 @@ export default function NotificationsPage() {
 
       if (confirmed) {
         const winnerId = matchData.player1Score > matchData.player2Score ? matchData.player1Id : matchData.player2Id;
-        // const loserId = matchData.player1Score < matchData.player2Score ? matchData.player1Id : matchData.player2Id;
-        const auraChange = 10; // Example Aura points
+        const loserId = matchData.player1Score < matchData.player2Score ? matchData.player1Id : matchData.player2Id;
+        const auraGain = 10; 
+        const auraLoss = -5; // Loser loses 5 points
 
         // Update match status and winner
         batch.update(matchRef, {
@@ -105,9 +106,18 @@ export default function NotificationsPage() {
 
         // Update winner's Aura
         const winnerRef = doc(db, 'users', winnerId);
-        const winnerSnap = await getDoc(winnerRef);
-        if (winnerSnap.exists()) {
-           batch.update(winnerRef, { aura: (winnerSnap.data().aura || 0) + auraChange });
+        const winnerUserSnap = await getDoc(winnerRef); // Renamed variable to avoid conflict
+        if (winnerUserSnap.exists()) {
+           batch.update(winnerRef, { aura: Math.max(0, (winnerUserSnap.data().aura || 0) + auraGain) });
+        }
+        
+        // Update loser's Aura
+        if (winnerId !== loserId) { // Ensure there is a distinct loser
+            const loserRef = doc(db, 'users', loserId);
+            const loserUserSnap = await getDoc(loserRef); // Renamed variable
+            if (loserUserSnap.exists()) {
+                batch.update(loserRef, { aura: Math.max(0, (loserUserSnap.data().aura || 0) + auraLoss) });
+            }
         }
         
         // Generate recap (this calls the AI flow)

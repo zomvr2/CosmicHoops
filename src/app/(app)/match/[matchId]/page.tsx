@@ -87,7 +87,9 @@ export default function MatchDetailsPage() {
 
       if (confirmed) {
         const winnerId = matchDetails.player1Score > matchDetails.player2Score ? matchDetails.player1Id : matchDetails.player2Id;
-        const auraChange = 10; // Example Aura points
+        const loserId = matchDetails.player1Score < matchDetails.player2Score ? matchDetails.player1Id : matchDetails.player2Id;
+        const auraGain = 10; 
+        const auraLoss = -5; // Loser loses 5 points
 
         updatedMatchData = {
           status: 'confirmed',
@@ -96,12 +98,22 @@ export default function MatchDetailsPage() {
         };
         batch.update(matchRef, updatedMatchData);
         
-        // Update winner's Aura, ensuring it doesn't go below 0
+        // Update winner's Aura
         const winnerUserRef = doc(db, 'users', winnerId);
         const winnerSnap = await getDoc(winnerUserRef);
         if (winnerSnap.exists()) {
             const currentAura = winnerSnap.data().aura || 0;
-            batch.update(winnerUserRef, { aura: Math.max(0, currentAura + auraChange) });
+            batch.update(winnerUserRef, { aura: Math.max(0, currentAura + auraGain) });
+        }
+
+        // Update loser's Aura
+        if (winnerId !== loserId) { // ensure there is a distinct loser
+            const loserUserRef = doc(db, 'users', loserId);
+            const loserSnap = await getDoc(loserUserRef);
+            if (loserSnap.exists()) {
+                const currentAura = loserSnap.data().aura || 0;
+                batch.update(loserUserRef, { aura: Math.max(0, currentAura + auraLoss) });
+            }
         }
 
         // Generate recap
