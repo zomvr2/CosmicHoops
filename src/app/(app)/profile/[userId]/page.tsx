@@ -114,7 +114,7 @@ export default function UserProfilePage() {
           setNewDisplayName(data.displayName || '');
           setNewAvatarUrl(data.avatarUrl || DEFAULT_AVATAR_URL);
           setNewDescription(data.description || '');
-          setNewBannerUrl(data.bannerUrl || ''); // Allow empty for default gradient
+          setNewBannerUrl(data.bannerUrl || ''); 
         } else {
           toast({ title: "Error", description: "User profile not found.", variant: "destructive" });
           router.push('/dashboard');
@@ -225,8 +225,6 @@ export default function UserProfilePage() {
 
     setIsUpdatingProfile(true);
     try {
-      let firebaseAuthDisplayNameUpdate = profileData.displayName; 
-
       if (normalizedNewUsername !== profileData.displayName) {
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("displayName", "==", normalizedNewUsername));
@@ -249,7 +247,6 @@ export default function UserProfilePage() {
               displayName: normalizedNewUsername,
             });
         }
-        firebaseAuthDisplayNameUpdate = normalizedNewUsername;
       }
 
       const currentAuthPhotoURL = auth.currentUser?.photoURL || DEFAULT_AVATAR_URL;
@@ -346,23 +343,24 @@ export default function UserProfilePage() {
           )}
         </div>
         
+        {/* Main Content Area Below Banner */}
         <div className="px-4 md:px-6">
             {/* Avatar - pulled up to overlap banner */}
-          <div className="relative -mt-16 md:-mt-20 w-24 h-24 md:w-32 md:h-32">
+          <div className="relative -mt-16 md:-mt-20">
             {isEditing && isOwnProfile ? (
-                <div className="h-full w-full rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
                   <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
                 </div>
               ) : (
-              <Avatar className="h-full w-full border-4 border-background shadow-lg">
+              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
                 <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} alt={mainDisplayName} />
                 <AvatarFallback className="text-4xl">{mainDisplayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
               </Avatar>
             )}
           </div>
 
-          {/* Full Name, Badges, Username and Aura */}
-          <div className="mt-4">
+          {/* Full Name, Badges */}
+          <div className="mt-3">
             <h1 className="text-2xl md:text-3xl font-bold leading-tight flex items-center gap-x-2">
               {mainDisplayName}
               {profileData.isCertifiedHooper && (
@@ -382,18 +380,20 @@ export default function UserProfilePage() {
                 </Tooltip>
               )}
             </h1>
-            <div className="mt-1 flex justify-between items-center text-sm ">
-                <p className="text-muted-foreground">@{profileData.displayName}</p>
-                <div className={`flex items-center font-bold ${auraDisplayColor}`}>
-                  <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} aria-hidden="true"/>
-                  <span>{profileData.aura} Aura</span>
-                </div>
+          </div>
+
+          {/* Username and Aura */}
+          <div className="mt-1 flex justify-between items-center">
+            <p className="text-muted-foreground">@{profileData.displayName}</p>
+            <div className={`flex items-center font-bold ${auraDisplayColor}`}>
+              <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} aria-hidden="true"/>
+              <span>{profileData.aura} Aura</span>
             </div>
           </div>
         </div>
       
         {/* Description Card or Edit Form Section */}
-        <div className="px-4 md:px-6 mt-6">
+        <div className="px-4 md:px-6 mt-8">
           <Card className="bg-card/70 backdrop-blur-md">
             <CardContent className="p-6">
               {isEditing && isOwnProfile ? (
@@ -432,11 +432,11 @@ export default function UserProfilePage() {
                 <>
                   <p className="text-foreground/80 prose prose-invert max-w-none">{profileData.description || "No description provided yet."}</p>
                    {isOwnProfile && (
-                    <div className="sm:hidden mt-6 flex flex-col gap-2"> {/* Mobile Logout Button - only one button now so it's full width */}
+                    <CardFooter className="sm:hidden px-0 pb-0 pt-6"> {/* Mobile Logout Button inside card */}
                       <Button variant="outline" onClick={handleLogout} className="w-full rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">
                         <LogOut className="mr-2 h-4 w-4" /> Logout
                       </Button>
-                    </div>
+                    </CardFooter>
                   )}
                 </>
               )}
