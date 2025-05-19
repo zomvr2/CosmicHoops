@@ -77,7 +77,9 @@ export function AuthForm() {
           friends: [],
           description: "",
           bannerUrl: "",
-          avatarUrl: DEFAULT_AVATAR_URL 
+          avatarUrl: DEFAULT_AVATAR_URL,
+          isCertifiedHooper: false, // Initialize badge field
+          isCosmicMarshall: false,  // Initialize badge field
         });
 
         await sendEmailVerification(userCredential.user);

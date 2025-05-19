@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Swords, Edit3, UserCircle, BarChart3, Save, X, BadgeCheck, LogOut } from 'lucide-react';
+import { Loader2, Sparkles, Swords, Edit3, UserCircle, BarChart3, Save, X, BadgeCheck, LogOut, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -31,6 +31,8 @@ interface UserProfileData {
   createdAt?: any;
   description?: string;
   bannerUrl?: string;
+  isCertifiedHooper?: boolean;
+  isCosmicMarshall?: boolean;
 }
 
 interface MatchData {
@@ -309,13 +311,23 @@ export default function UserProfilePage() {
             <div className="text-center mt-3">
               <div className="flex items-center justify-center gap-2">
                 <h1 className="text-2xl md:text-3xl font-bold">{profileData.displayName}</h1>
-                {isOwnProfile && currentUser?.emailVerified && (
+                {profileData.isCertifiedHooper && (
                   <Tooltip>
                     <TooltipTrigger>
                       <BadgeCheck className="h-6 w-6 md:h-7 md:h-7 text-blue-400" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Certified Hooper</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                 {profileData.isCosmicMarshall && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <ShieldCheck className="h-6 w-6 md:h-7 md:h-7 text-orange-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Cosmic Marshall</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -399,10 +411,12 @@ export default function UserProfilePage() {
                 </div>
               )}
               
-              <div className="flex items-center justify-center sm:justify-start text-2xl font-bold mb-6"> {/* Aura points */}
-                <Sparkles className={`w-8 h-8 mr-2 ${auraIconColor}`} />
-                <span className={auraDisplayColor}>{profileData.aura} Aura</span>
-              </div>
+              {profileData.aura !== 0 && (
+                <div className="flex items-center justify-center sm:justify-start text-2xl font-bold mb-4"> {/* Aura points */}
+                  <Sparkles className={`w-8 h-8 mr-2 ${auraIconColor}`} />
+                  <span className={auraDisplayColor}>{profileData.aura} Aura</span>
+                </div>
+              )}
 
               {profileData.description && (
                 <p className="text-foreground/80 prose prose-invert max-w-none mb-6">{profileData.description}</p>
@@ -413,13 +427,13 @@ export default function UserProfilePage() {
 
               {/* Mobile: Edit Profile & Logout Buttons (Below Description, 50/50) */}
               {isOwnProfile && (
-                <div className="flex gap-3 w-full mt-4 sm:hidden">
-                  <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 border-accent text-accent hover:bg-accent/10">
-                    <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
-                  </Button>
-                  <Button variant="outline" onClick={handleLogout} className="w-1/2 text-red-400 border-red-400 hover:bg-red-400/10">
-                     <LogOut className="mr-2 h-4 w-4" /> Logout
-                  </Button>
+                 <div className="flex gap-3 w-full mt-4 sm:hidden">
+                    <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 border-accent text-accent hover:bg-accent/10">
+                        <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+                    </Button>
+                    <Button variant="outline" onClick={handleLogout} className="w-1/2 text-red-400 border-red-400 hover:bg-red-400/10">
+                        <LogOut className="mr-2 h-4 w-4" /> Logout
+                    </Button>
                 </div>
               )}
             </>
