@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -95,11 +96,12 @@ export default function MatchDetailsPage() {
         };
         batch.update(matchRef, updatedMatchData);
         
-        // Update winner's Aura
+        // Update winner's Aura, ensuring it doesn't go below 0
         const winnerUserRef = doc(db, 'users', winnerId);
         const winnerSnap = await getDoc(winnerUserRef);
         if (winnerSnap.exists()) {
-            batch.update(winnerUserRef, { aura: (winnerSnap.data().aura || 0) + auraChange });
+            const currentAura = winnerSnap.data().aura || 0;
+            batch.update(winnerUserRef, { aura: Math.max(0, currentAura + auraChange) });
         }
 
         // Generate recap

@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Swords, Users, Bell, LogOut } from "lucide-react";
+import { Home, Swords, Users, Bell, LogOut, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/logo";
@@ -11,8 +11,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 interface NavItem {
   href: string;
@@ -68,34 +74,37 @@ export function SidebarNav() {
       </nav>
 
       <div className="mt-auto space-y-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full flex items-center justify-start space-x-3 px-4 py-2.5 text-foreground/70 hover:bg-muted hover:text-foreground"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Logout</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Logout</p>
-          </TooltipContent>
-        </Tooltip>
         {user && (
-          <Link href="/profile/me" className="block rounded-lg hover:bg-muted/50 transition-colors">
-            <div className="px-2 py-3 border-t border-border text-sm text-muted-foreground flex items-center space-x-3 cursor-pointer">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={user.photoURL || `https://placehold.co/40x40.png?text=${user.displayName?.[0] || 'U'}`} alt={user.displayName || 'User Avatar'} />
-                <AvatarFallback>{user.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-              </Avatar>
-              <div className="overflow-hidden">
-                <p className="font-semibold text-foreground truncate">@{user.displayName || "User"}</p>
-                <p className="truncate text-xs">{user.email}</p>
-              </div>
-            </div>
-          </Link>
+          <div className="px-1 py-2 border-t border-border text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
+            <Link href="/profile/me" className="flex items-center space-x-3 flex-grow overflow-hidden cursor-pointer pl-1 py-1">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={user.photoURL || `https://placehold.co/40x40.png?text=${user.displayName?.[0] || 'U'}`} alt={user.displayName || 'User Avatar'} />
+                  <AvatarFallback>{user.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                </Avatar>
+                <div className="overflow-hidden">
+                  <p className="font-semibold text-foreground truncate">@{user.displayName || "User"}</p>
+                  <p className="truncate text-xs">{user.email}</p>
+                </div>
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  aria-label="Open user menu"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="end" className="w-48">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
     </aside>
