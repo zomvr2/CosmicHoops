@@ -191,7 +191,7 @@ export default function HomePage() {
               </div>
               <div className="flex justify-center items-center">
                 <Image
-                  src="/ProfileScreenshot.png"
+                  src="/screenshot.png"
                   alt="Cosmic Hoops Profile Page Screenshot"
                   width={400}
                   height={400}
