@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Swords } from 'lucide-react';
 import type { User as FirebaseUser } from 'firebase/auth';
-import Link from 'next/link'; // Added Link import
+import Link from 'next/link';
 
 interface Friend {
   id: string;
@@ -161,33 +161,44 @@ export default function StartMatchPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 items-end">
-              <div>
-                <Label htmlFor="player1Score">{user.displayName || "Your"} Score (Player 1)</Label>
-                <Input
-                  id="player1Score"
-                  type="number"
-                  value={player1Score}
-                  onChange={(e) => setPlayer1Score(e.target.value)}
-                  placeholder="e.g., 11"
-                  required
-                  className="bg-background/50 mt-1"
-                  min="0"
-                />
+            {/* Score Section */}
+            <div className="space-y-3 rounded-lg bg-muted/20 p-4 border border-border/30">
+              <h3 className="text-md font-semibold text-center text-foreground/80">Enter Final Scores</h3>
+              <div className="grid grid-cols-2 gap-4 items-start">
+                <div>
+                  <Label htmlFor="player1Score" className="text-sm">
+                    {user.displayName || "Your"} Score <span className="text-xs text-muted-foreground">(Player 1)</span>
+                  </Label>
+                  <Input
+                    id="player1Score"
+                    type="number"
+                    value={player1Score}
+                    onChange={(e) => setPlayer1Score(e.target.value)}
+                    placeholder="e.g., 11"
+                    required
+                    className="bg-background/50 mt-1 text-lg font-semibold"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="player2Score" className="text-sm">
+                    {selectedFriendId ? friends.find(f => f.id === selectedFriendId)?.displayName || "Opponent" : "Opponent"} Score <span className="text-xs text-muted-foreground">(Player 2)</span>
+                  </Label>
+                  <Input
+                    id="player2Score"
+                    type="number"
+                    value={player2Score}
+                    onChange={(e) => setPlayer2Score(e.target.value)}
+                    placeholder="e.g., 7"
+                    required
+                    className="bg-background/50 mt-1 text-lg font-semibold"
+                    min="0"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="player2Score">Opponent's Score (Player 2)</Label>
-                <Input
-                  id="player2Score"
-                  type="number"
-                  value={player2Score}
-                  onChange={(e) => setPlayer2Score(e.target.value)}
-                  placeholder="e.g., 7"
-                  required
-                  className="bg-background/50 mt-1"
-                  min="0"
-                />
-              </div>
+              <p className="text-xs text-muted-foreground text-center pt-1">
+                One player must have a higher score (no ties).
+              </p>
             </div>
             
             <Button type="submit" className="w-full glow-primary" disabled={isLoading || isFetchingFriends || friends.length === 0 || !selectedFriendId}>
@@ -200,3 +211,4 @@ export default function StartMatchPage() {
     </div>
   );
 }
+
