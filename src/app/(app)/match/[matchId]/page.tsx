@@ -89,7 +89,7 @@ export default function MatchDetailsPage() {
         const winnerId = matchDetails.player1Score > matchDetails.player2Score ? matchDetails.player1Id : matchDetails.player2Id;
         const loserId = matchDetails.player1Score < matchDetails.player2Score ? matchDetails.player1Id : matchDetails.player2Id;
         const auraGain = 10; 
-        const auraLoss = -5; // Loser loses 5 points
+        const auraLoss = -5; 
 
         updatedMatchData = {
           status: 'confirmed',
@@ -103,16 +103,16 @@ export default function MatchDetailsPage() {
         const winnerSnap = await getDoc(winnerUserRef);
         if (winnerSnap.exists()) {
             const currentAura = winnerSnap.data().aura || 0;
-            batch.update(winnerUserRef, { aura: Math.max(0, currentAura + auraGain) });
+            batch.update(winnerUserRef, { aura: currentAura + auraGain });
         }
 
         // Update loser's Aura
-        if (winnerId !== loserId) { // ensure there is a distinct loser
+        if (winnerId !== loserId) { 
             const loserUserRef = doc(db, 'users', loserId);
             const loserSnap = await getDoc(loserUserRef);
             if (loserSnap.exists()) {
                 const currentAura = loserSnap.data().aura || 0;
-                batch.update(loserUserRef, { aura: Math.max(0, currentAura + auraLoss) });
+                batch.update(loserUserRef, { aura: currentAura + auraLoss });
             }
         }
 

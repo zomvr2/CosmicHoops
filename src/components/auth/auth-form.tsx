@@ -10,7 +10,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,8 +68,11 @@ export function AuthForm() {
           email: userCredential.user.email,
           displayName: displayName.trim(),
           aura: 0,
-          createdAt: new Date().toISOString(),
+          createdAt: serverTimestamp(),
           friends: [],
+          description: "",
+          bannerUrl: "",
+          avatarUrl: "" // Ensure avatarUrl is initialized if not already
         });
 
         await sendEmailVerification(userCredential.user);
@@ -204,4 +207,3 @@ export function AuthForm() {
     </Card>
   );
 }
-

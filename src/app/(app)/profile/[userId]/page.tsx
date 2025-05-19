@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Star, Swords, Edit3, UserCircle, BarChart3, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -25,6 +26,8 @@ interface UserProfileData {
   aura: number;
   avatarUrl?: string;
   createdAt?: any;
+  description?: string;
+  bannerUrl?: string;
 }
 
 interface MatchData {
@@ -62,6 +65,8 @@ export default function UserProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [newAvatarUrl, setNewAvatarUrl] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newBannerUrl, setNewBannerUrl] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const [h2hStats, setH2hStats] = useState<H2HStats | null>(null);
@@ -96,6 +101,8 @@ export default function UserProfilePage() {
           setProfileData({ uid: userDocSnap.id, ...data });
           setNewDisplayName(data.displayName || '');
           setNewAvatarUrl(data.avatarUrl || '');
+          setNewDescription(data.description || '');
+          setNewBannerUrl(data.bannerUrl || '');
         } else {
           toast({ title: "Error", description: "User profile not found.", variant: "destructive" });
           router.push('/dashboard');
@@ -174,6 +181,8 @@ export default function UserProfilePage() {
     if (profileData) {
       setNewDisplayName(profileData.displayName || '');
       setNewAvatarUrl(profileData.avatarUrl || '');
+      setNewDescription(profileData.description || '');
+      setNewBannerUrl(profileData.bannerUrl || '');
     }
     setIsEditing(!isEditing);
   };
@@ -208,21 +217,29 @@ export default function UserProfilePage() {
         }
       }
 
-      // Update Firebase Auth profile
-      await updateFirebaseProfile(auth.currentUser!, { // auth.currentUser should not be null here
+      // Update Firebase Auth profile (only displayName and photoURL are standard)
+      await updateFirebaseProfile(auth.currentUser!, { 
         displayName: newDisplayName.trim(),
-        photoURL: newAvatarUrl.trim() || null, // Use null if empty to potentially clear it
+        photoURL: newAvatarUrl.trim() || null, 
       });
 
       // Update Firestore document
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, {
         displayName: newDisplayName.trim(),
-        avatarUrl: newAvatarUrl.trim() || '', // Store empty string if cleared
+        avatarUrl: newAvatarUrl.trim() || '', 
+        description: newDescription.trim(),
+        bannerUrl: newBannerUrl.trim() || '',
       });
 
       // Update local state
-      setProfileData(prev => prev ? { ...prev, displayName: newDisplayName.trim(), avatarUrl: newAvatarUrl.trim() || '' } : null);
+      setProfileData(prev => prev ? { 
+        ...prev, 
+        displayName: newDisplayName.trim(), 
+        avatarUrl: newAvatarUrl.trim() || '',
+        description: newDescription.trim(),
+        bannerUrl: newBannerUrl.trim() || '',
+      } : null);
       
       toast({ title: "Success", description: "Profile updated successfully!" });
       setIsEditing(false);
@@ -249,7 +266,15 @@ export default function UserProfilePage() {
     <div className="space-y-8">
       <Card className="bg-card/70 backdrop-blur-md shadow-2xl overflow-hidden">
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
-           <Image src="https://placehold.co/1200x300.png" data-ai-hint="galaxy nebula" alt="Galactic Background" layout="fill" objectFit="cover" className="opacity-50" />
+           <Image 
+             src={profileData.bannerUrl || "https://placehold.co/1200x300.png?text=No+Banner"} 
+             data-ai-hint="galaxy nebula space" 
+             alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
+             layout="fill" 
+             objectFit="cover" 
+             className="opacity-50" 
+             priority={true} // Consider adding for LCP if this is a primary image
+           />
            <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end space-x-4">
             {!isEditing ? (
               <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
@@ -283,6 +308,7 @@ export default function UserProfilePage() {
                   onChange={(e) => setNewDisplayName(e.target.value)}
                   placeholder="Your new cosmic alias"
                   className="bg-background/50 mt-1"
+                  required
                 />
               </div>
               <div>
@@ -297,6 +323,29 @@ export default function UserProfilePage() {
                 />
                  <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar.</p>
               </div>
+              <div>
+                <Label htmlFor="newBannerUrl" className="text-foreground/80">Banner Image URL</Label>
+                <Input
+                  id="newBannerUrl"
+                  type="url"
+                  value={newBannerUrl}
+                  onChange={(e) => setNewBannerUrl(e.target.value)}
+                  placeholder="https://example.com/banner.png"
+                  className="bg-background/50 mt-1"
+                />
+                 <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner.</p>
+              </div>
+              <div>
+                <Label htmlFor="newDescription" className="text-foreground/80">Profile Description</Label>
+                <Textarea
+                  id="newDescription"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  placeholder="Tell us about your cosmic journey..."
+                  className="bg-background/50 mt-1"
+                  rows={3}
+                />
+              </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleToggleEdit} disabled={isUpdatingProfile}>
                   <X className="mr-2 h-4 w-4" /> Cancel
@@ -308,17 +357,25 @@ export default function UserProfilePage() {
               </div>
             </form>
           ) : (
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center text-2xl font-bold text-accent">
-                <Star className="w-8 h-8 mr-2 text-glow-accent" />
-                <span>{profileData.aura || 0} Aura</span>
+            <>
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex items-center text-2xl font-bold text-accent">
+                  <Star className="w-8 h-8 mr-2 text-glow-accent" />
+                  <span>{profileData.aura} Aura</span>
+                </div>
+                {isOwnProfile && (
+                  <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
+                    <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+                  </Button>
+                )}
               </div>
-              {isOwnProfile && (
-                <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
-                  <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
-                </Button>
+              {profileData.description && (
+                <p className="mt-6 text-foreground/80 md:text-left text-center">{profileData.description}</p>
               )}
-            </div>
+              {!profileData.description && (
+                 <p className="mt-6 text-muted-foreground md:text-left text-center italic">No description provided yet.</p>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -424,5 +481,3 @@ export default function UserProfilePage() {
     </div>
   );
 }
-
-    
