@@ -93,7 +93,7 @@ export default function UserProfilePage() {
         if (!authLoading && rawPageUserIdParam === 'me' && !currentUser) {
           router.push('/auth');
         }
-        setIsLoading(false); // Stop loading if no targetId and not pushing to auth
+        setIsLoading(false); 
         return;
       }
 
@@ -138,7 +138,7 @@ export default function UserProfilePage() {
       }
     };
 
-    if (!authLoading) { // Only fetch if auth state is resolved
+    if (!authLoading) { 
         fetchProfileData();
     }
   }, [rawPageUserIdParam, currentUser, authLoading, toast, router]);
@@ -261,16 +261,10 @@ export default function UserProfilePage() {
   };
 
 
-  if (isLoading || authLoading || (!profileData && !authLoading && rawPageUserIdParam !== 'me')) {
+  if (isLoading || authLoading ) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
-  if (!profileData && !authLoading && rawPageUserIdParam === 'me' && !currentUser) {
-     // This case might happen if authLoading finished but currentUser is still null (e.g. not logged in)
-     // The main useEffect already pushes to /auth, but this can be a fallback.
-     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
-  }
-
-
+  
   if (!profileData) {
     return <div className="text-center py-10">User not found or an error occurred.</div>;
   }
@@ -278,205 +272,195 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.uid === profileData.uid;
   const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-accent';
   const auraIconColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
-  const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || DEFAULT_BANNER_URL) : (profileData.bannerUrl || DEFAULT_BANNER_URL);
+  const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || '') : (profileData.bannerUrl || '');
+
 
   return (
     <TooltipProvider>
-    <div className="space-y-0">
-      {/* Banner Section */}
-      <div className="h-40 md:h-56 bg-gradient-to-br from-primary/30 via-purple-600/30 to-accent/30 relative">
-        {(isEditing && isOwnProfile ? newBannerUrl : profileData.bannerUrl) && (
-            <Image 
-              src={currentBannerUrl} 
-              alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
-              layout="fill" 
-              objectFit="cover" 
-              priority={true}
-            />
-        )}
-      </div>
+      <div className="space-y-0">
+        {/* Banner Section */}
+        <div className="h-40 md:h-56 bg-gradient-to-br from-primary/30 via-purple-600/30 to-accent/30 relative">
+          {currentBannerUrl && (
+              <Image 
+                src={currentBannerUrl} 
+                alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
+                layout="fill" 
+                objectFit="cover" 
+                priority={true}
+              />
+          )}
+        </div>
 
-      {/* Actions Container - Edit/Logout buttons */}
-      {isOwnProfile && !isEditing && (
-        <div className="px-4 md:px-6 pt-3 flex justify-end items-center gap-2">
+        {/* Profile Header Section: Avatar and Edit Button (Desktop) */}
+        <div className="px-4 md:px-6 flex justify-between items-end -mt-12 md:-mt-16 mb-4">
+          {isEditing && isOwnProfile ? (
+            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+              <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
+            </div>
+          ) : (
+            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+              <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+              <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+            </Avatar>
+          )}
+
+          {isOwnProfile && !isEditing && (
             <Button 
               variant="outline" 
               onClick={handleToggleEdit} 
-              className="bg-background/80 hover:bg-background text-foreground border-border/50 shadow-sm p-2 md:px-3 md:py-2"
+              className="rounded-full px-4 py-1.5 text-sm font-semibold hidden sm:flex" // Desktop Edit Button
             >
-              <Edit3 className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Edit Profile</span>
+              Edit Profile
             </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={handleLogout} 
-              className="md:hidden bg-background/80 hover:bg-background text-red-400 border-red-400/50 hover:border-red-400 shadow-sm p-2"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+          )}
         </div>
-      )}
-
-      {/* Profile Avatar & Initial Info Container */}
-      <div className="relative px-4 md:px-6 -mt-24 md:-mt-28">
-        {/* Avatar - shows placeholder if editing own profile */}
-        {isEditing && isOwnProfile ? (
-            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-                <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-            </div>
-        ) : (
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-                <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
-                <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-            </Avatar>
-        )}
-      </div>
-      
-      {/* Profile Info: Name, Badges, Aura */}
-      <div className="px-4 md:px-6 mt-3 space-y-2">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-bold">@{profileData.displayName}</h1>
-                {profileData.isCertifiedHooper && (
-                <Tooltip>
-                    <TooltipTrigger>
-                    <BadgeCheck className="h-5 w-5 md:h-6 md:h-6 text-blue-400" />
-                    </TooltipTrigger>
-                    <TooltipContent><p>Certified Hooper</p></TooltipContent>
-                </Tooltip>
-                )}
-                {profileData.isCosmicMarshall && (
-                <Tooltip>
-                    <TooltipTrigger>
-                    <ShieldCheck className="h-5 w-5 md:h-6 md:h-6 text-orange-400" />
-                    </TooltipTrigger>
-                    <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
-                </Tooltip>
-                )}
-            </div>
-            <div className={`flex items-center text-lg font-bold ${auraDisplayColor}`}>
-                <Sparkles className="w-5 h-5 mr-1.5" />
-                <span>{profileData.aura} Aura</span>
-            </div>
-        </div>
-      </div>
-      
-      {/* Profile Edit Form OR Description & Mobile Buttons */}
-      <div className="px-4 md:px-6 mt-3 space-y-3">
-        {isEditing && isOwnProfile ? (
-          <form onSubmit={handleUpdateProfile} className="space-y-6 bg-card/70 backdrop-blur-md p-4 md:p-6 rounded-lg mt-2">
-            <div>
-              <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
-              <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your new cosmic alias" className="bg-background/50 mt-1" required />
-              <p className="text-xs text-muted-foreground mt-1">Username must be unique and will be checked upon saving.</p>
-            </div>
-            <div>
-              <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
-              <Input id="newAvatarUrl" type="url" value={newAvatarUrl} onChange={(e) => setNewAvatarUrl(e.target.value)} placeholder="https://example.com/avatar.png" className="bg-background/50 mt-1" />
-              <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar. Defaults to Cosmic Hoops standard if empty.</p>
-            </div>
-            <div>
-              <Label htmlFor="newBannerUrl" className="text-foreground/80">Banner Image URL</Label>
-              <Input id="newBannerUrl" type="url" value={newBannerUrl} onChange={(e) => setNewBannerUrl(e.target.value)} placeholder="https://example.com/banner.png" className="bg-background/50 mt-1" />
-              <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner. Defaults to a plain white banner.</p>
-            </div>
-            <div>
-              <Label htmlFor="newDescription" className="text-foreground/80">Profile Description</Label>
-              <Textarea id="newDescription" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Tell us about your cosmic journey..." className="bg-background/50 mt-1" rows={3} />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={handleToggleEdit} disabled={isUpdatingProfile}><X className="mr-2 h-4 w-4" /> Cancel</Button>
-              <Button type="submit" disabled={isUpdatingProfile} className="glow-accent">{isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes</Button>
-            </div>
-          </form>
-        ) : (
-          <>
-            {/* Description */}
-            {profileData.description && (
-              <p className="text-foreground/80 prose prose-invert max-w-none">{profileData.description}</p>
-            )}
-            {!profileData.description && ( 
-               <p className="text-muted-foreground italic">No description provided yet.</p>
-            )}
-          </>
-        )}
-      </div>
-      
-      <div className="px-4 md:px-6 mt-6">
-         <Separator className="my-6" />
-      </div>
-
-      {/* H2H Stats and Match History Cards */}
-      <div className="px-4 md:px-6 space-y-8 pb-8">
-        {!isOwnProfile && currentUser && (
-          <Card className="bg-card/50">
-            <CardHeader><CardTitle className="text-2xl flex items-center"><BarChart3 className="mr-2 h-6 w-6 text-accent" />Head-to-Head with @{profileData.displayName}</CardTitle><CardDescription>Your battle record against this cosmic warrior.</CardDescription></CardHeader>
-            <CardContent>
-              {isLoadingH2H ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                : h2hStats && h2hStats.totalPlayed > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center"><span className="text-muted-foreground">Total Matches:</span><span className="font-semibold">{h2hStats.totalPlayed}</span></div>
-                  <div className="flex justify-between items-center"><span className="text-muted-foreground">Your Wins:</span><span className="font-semibold text-green-400">{h2hStats.currentUserWins}</span></div>
-                  <div className="flex justify-between items-center"><span className="text-muted-foreground">@{profileData.displayName}'s Wins:</span><span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span></div>
-                  {h2hStats.totalPlayed > 0 && (
-                    <div className="pt-2">
-                      <Progress value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`} />
-                       <div className="flex justify-between text-xs mt-1">
-                         <span className="text-green-400">You ({h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
-                         <span className="text-red-400">@{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
-                      </div>
-                    </div>
+        
+        {/* User Info & Description Section OR Edit Form */}
+        <div className="px-4 md:px-6">
+          {!isEditing || !isOwnProfile ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h1 className="text-xl md:text-2xl font-bold">{profileData.displayName}</h1>
+                  {profileData.isCertifiedHooper && (
+                  <Tooltip>
+                      <TooltipTrigger>
+                      <BadgeCheck className="h-5 w-5 md:h-6 md:h-6 text-blue-400" />
+                      </TooltipTrigger>
+                      <TooltipContent><p>Certified Hooper</p></TooltipContent>
+                  </Tooltip>
                   )}
+                  {profileData.isCosmicMarshall && (
+                  <Tooltip>
+                      <TooltipTrigger>
+                      <ShieldCheck className="h-5 w-5 md:h-6 md:h-6 text-orange-400" />
+                      </TooltipTrigger>
+                      <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
+                  </Tooltip>
+                  )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-muted-foreground">@{profileData.displayName}</p>
+                <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
+                  <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
+                  <span>{profileData.aura} Aura</span>
                 </div>
-              ) : h2hStats && h2hStats.totalPlayed === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No matches played against each other yet.</p>
-              ) : !isLoadingH2H ? (
-                <p className="text-muted-foreground text-center py-4">Could not load head-to-head stats.</p>
-              ) : null}
+              </div>
+              <p className="text-foreground/80 prose prose-invert max-w-none pt-1">{profileData.description || "No description provided yet."}</p>
+              
+              {/* Mobile Action Buttons: Edit & Logout */}
+              {isOwnProfile && !isEditing && (
+                <div className="flex sm:hidden gap-2 pt-3">
+                  <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 rounded-full">Edit Profile</Button>
+                  <Button variant="outline" onClick={handleLogout} className="w-1/2 rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">Logout</Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            // Edit Form
+            <form onSubmit={handleUpdateProfile} className="space-y-6 bg-card/30 backdrop-blur-sm p-4 md:p-6 rounded-lg mt-4">
+              <div>
+                <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
+                <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your new cosmic alias" className="bg-background/50 mt-1" required />
+                <p className="text-xs text-muted-foreground mt-1">Username must be unique and will be checked upon saving.</p>
+              </div>
+              <div>
+                <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
+                <Input id="newAvatarUrl" type="url" value={newAvatarUrl} onChange={(e) => setNewAvatarUrl(e.target.value)} placeholder="https://example.com/avatar.png" className="bg-background/50 mt-1" />
+                <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar. Defaults to Cosmic Hoops standard if empty.</p>
+              </div>
+              <div>
+                <Label htmlFor="newBannerUrl" className="text-foreground/80">Banner Image URL</Label>
+                <Input id="newBannerUrl" type="url" value={newBannerUrl} onChange={(e) => setNewBannerUrl(e.target.value)} placeholder="https://example.com/banner.png" className="bg-background/50 mt-1" />
+                <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner. Defaults to a plain white banner.</p>
+              </div>
+              <div>
+                <Label htmlFor="newDescription" className="text-foreground/80">Profile Description</Label>
+                <Textarea id="newDescription" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Tell us about your cosmic journey..." className="bg-background/50 mt-1" rows={3} />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleToggleEdit} disabled={isUpdatingProfile}><X className="mr-2 h-4 w-4" /> Cancel</Button>
+                <Button type="submit" disabled={isUpdatingProfile} className="glow-accent">{isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes</Button>
+              </div>
+            </form>
+          )}
+        </div>
+      
+        {/* Separator and H2H/Match History cards */}
+        <div className="px-4 md:px-6 mt-6">
+           <Separator className="my-6" />
+        </div>
+
+        <div className="px-4 md:px-6 space-y-8 pb-8">
+          {!isOwnProfile && currentUser && (
+            <Card className="bg-card/50">
+              <CardHeader><CardTitle className="text-2xl flex items-center"><BarChart3 className="mr-2 h-6 w-6 text-accent" />Head-to-Head with @{profileData.displayName}</CardTitle><CardDescription>Your battle record against this cosmic warrior.</CardDescription></CardHeader>
+              <CardContent>
+                {isLoadingH2H ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  : h2hStats && h2hStats.totalPlayed > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Total Matches:</span><span className="font-semibold">{h2hStats.totalPlayed}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Your Wins:</span><span className="font-semibold text-green-400">{h2hStats.currentUserWins}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-muted-foreground">@{profileData.displayName}'s Wins:</span><span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span></div>
+                    {h2hStats.totalPlayed > 0 && (
+                      <div className="pt-2">
+                        <Progress value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`} />
+                         <div className="flex justify-between text-xs mt-1">
+                           <span className="text-green-400">You ({h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                           <span className="text-red-400">@{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : h2hStats && h2hStats.totalPlayed === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No matches played against each other yet.</p>
+                ) : !isLoadingH2H ? (
+                  <p className="text-muted-foreground text-center py-4">Could not load head-to-head stats.</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="bg-card/50">
+            <CardHeader><CardTitle className="text-2xl flex items-center" id="match-history"><Swords className="mr-2 h-6 w-6 text-accent" />Match History</CardTitle><CardDescription>Chronicles of past celestial clashes for @{profileData.displayName}.</CardDescription></CardHeader>
+            <CardContent>
+              {matchHistory.length === 0 ? (
+                <p className="text-muted-foreground text-center py-6">No matches played yet. The arena awaits!</p>
+              ) : (
+                <ul className="space-y-4">
+                  {matchHistory.map(match => {
+                    const isPlayer1ProfileUser = match.player1Id === profileData.uid;
+                    const opponentName = isPlayer1ProfileUser ? match.player2Name : match.player1Name;
+                    const opponentId = isPlayer1ProfileUser ? match.player2Id : match.player1Id;
+                    const profileUserScore = isPlayer1ProfileUser ? match.player1Score : match.player2Score;
+                    const opponentScore = isPlayer1ProfileUser ? match.player2Score : match.player1Score;
+                    const didProfileUserWin = match.winnerId === profileData.uid;
+                    const matchDate = match.createdAt?.toDate ? new Date(match.createdAt.toDate()).toLocaleDateString() : 'A while ago';
+                    return (
+                      <li key={match.id} className="p-4 bg-muted/30 rounded-lg border border-border/30">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                          <div>
+                            <p className="text-lg font-semibold">vs <Link href={`/profile/${opponentId}`} className="text-accent hover:underline">@{opponentName || "Unknown Player"}</Link></p>
+                            <p className={`text-xl font-bold ${didProfileUserWin ? 'text-green-400' : 'text-red-400'}`}>{didProfileUserWin ? 'Victory' : 'Defeat'} ({profileUserScore} - {opponentScore})</p>
+                            <p className="text-xs text-muted-foreground">{matchDate}</p>
+                          </div>
+                          <div className="mt-2 sm:mt-0">
+                             <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/10"><Link href={`/match/${match.id}`}>View Recap</Link></Button>
+                          </div>
+                        </div>
+                        {match.recap && (
+                          <p className="mt-3 text-sm text-foreground/80 italic border-l-2 border-accent pl-3">"{match.recap.substring(0, 100)}{match.recap.length > 100 ? '...' : ''}"</p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </CardContent>
           </Card>
-        )}
-
-        <Card className="bg-card/50">
-          <CardHeader><CardTitle className="text-2xl flex items-center" id="match-history"><Swords className="mr-2 h-6 w-6 text-accent" />Match History</CardTitle><CardDescription>Chronicles of past celestial clashes for @{profileData.displayName}.</CardDescription></CardHeader>
-          <CardContent>
-            {matchHistory.length === 0 ? (
-              <p className="text-muted-foreground text-center py-6">No matches played yet. The arena awaits!</p>
-            ) : (
-              <ul className="space-y-4">
-                {matchHistory.map(match => {
-                  const isPlayer1ProfileUser = match.player1Id === profileData.uid;
-                  const opponentName = isPlayer1ProfileUser ? match.player2Name : match.player1Name;
-                  const opponentId = isPlayer1ProfileUser ? match.player2Id : match.player1Id;
-                  const profileUserScore = isPlayer1ProfileUser ? match.player1Score : match.player2Score;
-                  const opponentScore = isPlayer1ProfileUser ? match.player2Score : match.player1Score;
-                  const didProfileUserWin = match.winnerId === profileData.uid;
-                  const matchDate = match.createdAt?.toDate ? new Date(match.createdAt.toDate()).toLocaleDateString() : 'A while ago';
-                  return (
-                    <li key={match.id} className="p-4 bg-muted/30 rounded-lg border border-border/30">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div>
-                          <p className="text-lg font-semibold">vs <Link href={`/profile/${opponentId}`} className="text-accent hover:underline">@{opponentName || "Unknown Player"}</Link></p>
-                          <p className={`text-xl font-bold ${didProfileUserWin ? 'text-green-400' : 'text-red-400'}`}>{didProfileUserWin ? 'Victory' : 'Defeat'} ({profileUserScore} - {opponentScore})</p>
-                          <p className="text-xs text-muted-foreground">{matchDate}</p>
-                        </div>
-                        <div className="mt-2 sm:mt-0">
-                           <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/10"><Link href={`/match/${match.id}`}>View Recap</Link></Button>
-                        </div>
-                      </div>
-                      {match.recap && (
-                        <p className="mt-3 text-sm text-foreground/80 italic border-l-2 border-accent pl-3">"{match.recap.substring(0, 100)}{match.recap.length > 100 ? '...' : ''}"</p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        </div>
       </div>
-    </div>
     </TooltipProvider>
   );
 }
+
+    
