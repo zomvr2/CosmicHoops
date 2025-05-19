@@ -18,6 +18,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
+const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
+
 export function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -60,7 +62,10 @@ export function AuthForm() {
         }
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: displayName.trim() });
+        await updateProfile(userCredential.user, { 
+          displayName: displayName.trim(),
+          photoURL: DEFAULT_AVATAR_URL 
+        });
         
         // Create user document in Firestore
         await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -72,7 +77,7 @@ export function AuthForm() {
           friends: [],
           description: "",
           bannerUrl: "",
-          avatarUrl: "" // Ensure avatarUrl is initialized if not already
+          avatarUrl: DEFAULT_AVATAR_URL 
         });
 
         await sendEmailVerification(userCredential.user);

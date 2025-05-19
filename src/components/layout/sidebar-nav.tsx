@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
 interface NavItem {
   href: string;
@@ -78,7 +79,7 @@ export function SidebarNav() {
           <div className="px-1 py-2 border-t border-border text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
             <Link href="/profile/me" className="flex items-center space-x-3 flex-grow overflow-hidden cursor-pointer pl-1 py-1">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={user.photoURL || `https://placehold.co/40x40.png?text=${user.displayName?.[0] || 'U'}`} alt={user.displayName || 'User Avatar'} />
+                  <AvatarImage src={user.photoURL || DEFAULT_AVATAR_URL} alt={user.displayName || 'User Avatar'} />
                   <AvatarFallback>{user.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>
                 <div className="overflow-hidden">

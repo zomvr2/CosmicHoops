@@ -17,7 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"; // Added TooltipProvider
+
+const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
 interface UserProfileData {
   uid: string;
@@ -100,7 +102,7 @@ export default function UserProfilePage() {
           const data = userDocSnap.data() as UserProfileData;
           setProfileData({ uid: userDocSnap.id, ...data });
           setNewDisplayName(data.displayName || '');
-          setNewAvatarUrl(data.avatarUrl || '');
+          setNewAvatarUrl(data.avatarUrl || DEFAULT_AVATAR_URL);
           setNewDescription(data.description || '');
           setNewBannerUrl(data.bannerUrl || '');
         } else {
@@ -180,7 +182,7 @@ export default function UserProfilePage() {
   const handleToggleEdit = () => {
     if (profileData) {
       setNewDisplayName(profileData.displayName || '');
-      setNewAvatarUrl(profileData.avatarUrl || '');
+      setNewAvatarUrl(profileData.avatarUrl || DEFAULT_AVATAR_URL);
       setNewDescription(profileData.description || '');
       setNewBannerUrl(profileData.bannerUrl || '');
     }
@@ -220,14 +222,14 @@ export default function UserProfilePage() {
       // Update Firebase Auth profile (only displayName and photoURL are standard)
       await updateFirebaseProfile(auth.currentUser!, { 
         displayName: newDisplayName.trim(),
-        photoURL: newAvatarUrl.trim() || null, 
+        photoURL: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
       });
 
       // Update Firestore document
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, {
         displayName: newDisplayName.trim(),
-        avatarUrl: newAvatarUrl.trim() || '', 
+        avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim() || '',
       });
@@ -236,7 +238,7 @@ export default function UserProfilePage() {
       setProfileData(prev => prev ? { 
         ...prev, 
         displayName: newDisplayName.trim(), 
-        avatarUrl: newAvatarUrl.trim() || '',
+        avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL,
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim() || '',
       } : null);
@@ -263,6 +265,7 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.uid === profileData.uid;
 
   return (
+    <TooltipProvider> {/* Ensure TooltipProvider wraps content using Tooltip */}
     <div className="space-y-8">
       <Card className="bg-card/70 backdrop-blur-md shadow-2xl overflow-hidden">
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
@@ -278,7 +281,7 @@ export default function UserProfilePage() {
            <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end space-x-4">
             {!isEditing ? (
               <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-                <AvatarImage src={profileData.avatarUrl || `https://placehold.co/128x128.png`} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+                <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
                 <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
               </Avatar>
             ) : (
@@ -304,7 +307,6 @@ export default function UserProfilePage() {
               ) : (
                 <div className="pb-2"> {/* Placeholder for spacing if needed */} </div>
               )}
-              {/* Removed CardDescription for join date */}
             </div>
            </div>
         </div>
@@ -333,7 +335,7 @@ export default function UserProfilePage() {
                   placeholder="https://example.com/avatar.png"
                   className="bg-background/50 mt-1"
                 />
-                 <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar.</p>
+                 <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar. Defaults to Cosmic Hoops standard if empty.</p>
               </div>
               <div>
                 <Label htmlFor="newBannerUrl" className="text-foreground/80">Banner Image URL</Label>
@@ -495,5 +497,6 @@ export default function UserProfilePage() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, type FormEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -12,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Users, CheckCircle, XCircle, Loader2, Search, Send } from 'lucide-react';
 import Link from 'next/link';
 
+const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
+
 interface UserProfile {
   uid: string;
   displayName: string;
@@ -24,6 +27,7 @@ interface FriendRequest {
   fromUserId: string;
   fromUserName: string; // denormalized for display
   status: 'pending' | 'accepted' | 'declined';
+  toUserId: string; // Added for checking sent requests status
 }
 
 export default function FriendsPage() {
@@ -150,7 +154,7 @@ export default function FriendsPage() {
         return;
       }
 
-      await addDoc(collection(db, 'friendRequests'), {
+      const newRequestRef = await addDoc(collection(db, 'friendRequests'), {
         fromUserId: user.uid,
         toUserId: targetUserId,
         status: 'pending',
@@ -158,7 +162,7 @@ export default function FriendsPage() {
       });
       // Add to sent requests locally for immediate feedback
       const targetUser = searchResults.find(u => u.uid === targetUserId) || friends.find(u => u.uid === targetUserId);
-      setSentRequests(prev => [...prev, { id: '', fromUserId: user.uid, fromUserName: user.displayName || '', status: 'pending' }]);
+      setSentRequests(prev => [...prev, { id: newRequestRef.id, fromUserId: user.uid!, fromUserName: user.displayName || '', status: 'pending', toUserId: targetUserId }]);
 
 
       // Notification for the recipient
@@ -225,9 +229,10 @@ export default function FriendsPage() {
 
       setFriendRequests(prev => prev.filter(req => req.id !== requestId));
       if (newStatus === 'accepted' && fromUserId) {
-        const newFriendProfile = await getDoc(doc(db, 'users', fromUserId));
-        if (newFriendProfile.exists()) {
-           setFriends(prev => [...prev, { uid: newFriendProfile.id, ...newFriendProfile.data() } as UserProfile]);
+        const newFriendProfileDoc = await getDoc(doc(db, 'users', fromUserId));
+        if (newFriendProfileDoc.exists()) {
+           const newFriendData = newFriendProfileDoc.data() as UserProfile;
+           setFriends(prev => [...prev, { uid: newFriendProfileDoc.id, ...newFriendData }]);
         }
       }
       toast({ title: "Success", description: `Friend request ${newStatus}.` });
@@ -240,7 +245,7 @@ export default function FriendsPage() {
 
   const getRequestStatusForUser = (targetUserId: string) => {
     if (friends.some(f => f.uid === targetUserId)) return "Already Friends";
-    const sentReq = sentRequests.find(req => (req as any).toUserId === targetUserId && req.status === 'pending');
+    const sentReq = sentRequests.find(req => req.toUserId === targetUserId && req.status === 'pending');
     if (sentReq) return "Request Sent";
     const receivedReq = friendRequests.find(req => req.fromUserId === targetUserId && req.status === 'pending');
     if (receivedReq) return "Request Received";
@@ -277,8 +282,8 @@ export default function FriendsPage() {
                     <li key={friend.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <Avatar>
-                          <AvatarImage src={friend.avatarUrl || `https://placehold.co/40x40.png?text=${friend.displayName?.[0]}`} alt={friend.displayName} />
-                          <AvatarFallback>{friend.displayName?.[0] || 'U'}</AvatarFallback>
+                          <AvatarImage src={friend.avatarUrl || DEFAULT_AVATAR_URL} alt={friend.displayName} />
+                          <AvatarFallback>{friend.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{friend.displayName}</span>
                       </div>
@@ -305,7 +310,9 @@ export default function FriendsPage() {
                     <li key={req.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <div className="flex items-center space-x-3">
                          <Avatar>
-                           <AvatarFallback>{req.fromUserName?.[0] || 'U'}</AvatarFallback>
+                           {/* Assuming the sender (fromUserId) might not have an avatarUrl in req directly */}
+                           {/* You might need to fetch sender's profile for avatar here if needed, or use fallback */}
+                           <AvatarFallback>{req.fromUserName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                          </Avatar>
                         <span className="font-medium">{req.fromUserName} wants to connect!</span>
                       </div>
@@ -350,8 +357,8 @@ export default function FriendsPage() {
                       <li key={foundUser.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center space-x-3">
                            <Avatar>
-                             <AvatarImage src={foundUser.avatarUrl || `https://placehold.co/40x40.png?text=${foundUser.displayName?.[0]}`} alt={foundUser.displayName} />
-                             <AvatarFallback>{foundUser.displayName?.[0] || 'U'}</AvatarFallback>
+                             <AvatarImage src={foundUser.avatarUrl || DEFAULT_AVATAR_URL} alt={foundUser.displayName} />
+                             <AvatarFallback>{foundUser.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                            </Avatar>
                           <span className="font-medium">{foundUser.displayName}</span>
                         </div>
