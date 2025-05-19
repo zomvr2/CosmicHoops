@@ -7,7 +7,7 @@ import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore';
 import { updateProfile as updateFirebaseProfile } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 const DEFAULT_BANNER_URL = "https://placehold.co/1200x300/FFFFFF/FFFFFF.png"; 
+const USERNAME_REGEX = /^[a-z0-9._]{3,20}$/;
 
 interface UserProfileData {
   uid: string;
@@ -94,13 +95,11 @@ export default function UserProfilePage() {
 
       if (!targetUserId) {
         if (!authLoading && rawPageUserIdParam === 'me' && !currentUser) {
-          router.push('/auth'); // Redirect if trying to view 'me' but not logged in
+          router.push('/auth'); 
         } else if (!rawPageUserIdParam) {
             toast({ title: "Error", description: "User ID not provided.", variant: "destructive" });
             router.push('/dashboard');
         }
-        // If targetUserId is still undefined after checks, it might be an invalid param or loading state
-        // Let it proceed to finally setIsLoading(false) if it's just authLoading
         if (!authLoading) setIsLoading(false);
         return;
       }
@@ -123,7 +122,6 @@ export default function UserProfilePage() {
           return;
         }
 
-        // Fetch match history
         const q1 = query(collection(db, 'matches'), where('player1Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         const q2 = query(collection(db, 'matches'), where('player2Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         
@@ -230,17 +228,16 @@ export default function UserProfilePage() {
 
     setIsUpdatingProfile(true);
     try {
-      let firebaseAuthDisplayNameUpdate = profileData.displayName; // Keep current auth display name unless username changes
+      let firebaseAuthDisplayNameUpdate = profileData.displayName; 
 
       if (normalizedNewUsername !== profileData.displayName) {
         const usersRef = collection(db, "users");
-        // Check uniqueness for the new username
         const q = query(usersRef, where("displayName", "==", normalizedNewUsername));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           let nameTaken = false;
           querySnapshot.forEach((doc) => {
-            if (doc.id !== currentUser.uid) { // Check against other users
+            if (doc.id !== currentUser.uid) { 
               nameTaken = true;
             }
           });
@@ -250,14 +247,12 @@ export default function UserProfilePage() {
             return;
           }
         }
-        // If username changes, update Firebase Auth displayName
         await updateFirebaseProfile(auth.currentUser!, { 
           displayName: normalizedNewUsername,
         });
         firebaseAuthDisplayNameUpdate = normalizedNewUsername;
       }
 
-      // Update Firebase Auth photoURL if it changed
       if ((newAvatarUrl.trim() || DEFAULT_AVATAR_URL) !== (profileData.avatarUrl || DEFAULT_AVATAR_URL)) {
          await updateFirebaseProfile(auth.currentUser!, { 
             photoURL: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
@@ -268,7 +263,7 @@ export default function UserProfilePage() {
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, {
         fullName: trimmedNewFullName,
-        displayName: normalizedNewUsername, // Store normalized username in Firestore
+        displayName: normalizedNewUsername, 
         avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim() || '',
@@ -317,7 +312,7 @@ export default function UserProfilePage() {
     <TooltipProvider>
       <div className="space-y-0">
         {/* Banner Section */}
-        <div className="h-40 md:h-56 bg-gradient-to-br from-primary/30 via-purple-600/30 to-accent/30 relative">
+        <div className="h-40 md:h-56 bg-gradient-to-br from-primary/30 via-purple-600/30 to-accent/30 relative rounded-lg overflow-hidden">
           {currentBannerUrl && (
               <Image 
                 src={currentBannerUrl} 
@@ -332,7 +327,7 @@ export default function UserProfilePage() {
              <Button 
               variant="outline" 
               onClick={handleToggleEdit} 
-              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 rounded-lg text-xs sm:text-sm"
+              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 rounded-lg text-xs"
             >
               <Edit3 className="h-4 w-4 sm:mr-0 md:mr-2" />
               <span className="hidden md:inline">Edit Profile</span>
@@ -341,24 +336,26 @@ export default function UserProfilePage() {
         </div>
         
         {/* Avatar Section - Overlaps Banner */}
-        <div className="relative px-4 md:px-6 -mt-12 md:-mt-16">
-          {isEditing && isOwnProfile ? (
-            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-              <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-            </div>
-          ) : (
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-              <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} alt={profileData.displayName} />
-              <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-            </Avatar>
-          )}
+        <div className="px-4 md:px-6">
+          <div className="relative -mt-12 md:-mt-16 h-24 w-24 md:h-32 md:w-32">
+            {isEditing && isOwnProfile ? (
+              <div className="h-full w-full rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+                <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
+              </div>
+            ) : (
+              <Avatar className="h-full w-full border-4 border-background shadow-lg">
+                <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} alt={profileData.displayName} />
+                <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+              </Avatar>
+            )}
+          </div>
         </div>
 
         {/* User Info - Name, @username, Badges, Aura */}
         <div className="px-4 md:px-6 mt-4">
-          <h1 className="text-2xl md:text-3xl font-bold">{profileData.fullName || profileData.displayName}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{profileData.fullName || `@${profileData.displayName}`}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
-            <p>@{profileData.displayName}</p>
+            {profileData.fullName && <p>@{profileData.displayName}</p>}
             {profileData.isCertifiedHooper && (
               <Tooltip>
                 <TooltipTrigger>
@@ -375,7 +372,7 @@ export default function UserProfilePage() {
                 <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
               </Tooltip>
             )}
-            <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
+             <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
               <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
               <span>{profileData.aura} Aura</span>
             </div>
@@ -383,7 +380,7 @@ export default function UserProfilePage() {
         </div>
       
         {/* Description Card or Edit Form Section */}
-        <Card className="bg-card/50 backdrop-blur-sm mx-4 md:mx-6 mt-8">
+        <Card className="bg-card/70 backdrop-blur-md mx-4 md:mx-6 mt-8">
           {isEditing && isOwnProfile ? (
             <CardContent className="p-6">
               <form onSubmit={handleUpdateProfile} className="space-y-6">
@@ -396,6 +393,7 @@ export default function UserProfilePage() {
                   <Label htmlFor="newDisplayName" className="text-foreground/80">Username (@)</Label>
                   <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your unique username (e.g. alex_cosmic)" className="bg-background/50 mt-1" required />
                   <p className="text-xs text-muted-foreground mt-1">3-20 characters. Lowercase, numbers, '.', or '_'. This is your unique ID.</p>
+                   <p className="text-xs text-muted-foreground mt-1">Username must be unique and will be checked upon saving.</p>
                 </div>
                 <div>
                   <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
@@ -440,7 +438,7 @@ export default function UserProfilePage() {
 
         <div className="px-4 md:px-6 space-y-8 pb-8">
           {!isOwnProfile && currentUser && (
-            <Card className="bg-card/50">
+            <Card className="bg-card/70 backdrop-blur-md">
               <CardHeader><CardTitle className="text-2xl flex items-center"><BarChart3 className="mr-2 h-6 w-6 text-accent" />Head-to-Head with @{profileData.displayName}</CardTitle><CardDescription>Your battle record against this cosmic warrior.</CardDescription></CardHeader>
               <CardContent>
                 {isLoadingH2H ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
@@ -468,7 +466,7 @@ export default function UserProfilePage() {
             </Card>
           )}
 
-          <Card className="bg-card/50">
+          <Card className="bg-card/70 backdrop-blur-md">
             <CardHeader><CardTitle className="text-2xl flex items-center" id="match-history"><Swords className="mr-2 h-6 w-6 text-accent" />Match History</CardTitle><CardDescription>Chronicles of past celestial clashes for @{profileData.displayName}.</CardDescription></CardHeader>
             <CardContent>
               {matchHistory.length === 0 ? (
