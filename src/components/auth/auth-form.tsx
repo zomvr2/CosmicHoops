@@ -28,13 +28,13 @@ export function AuthForm() {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rawUsername, setRawUsername] = useState(""); // Store raw input for controlled component
+  const [rawUsername, setRawUsername] = useState("");
+  const [rawFullName, setRawFullName] = useState(""); // New state for Full Name
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allow users to type uppercase, but it will be normalized on submit
     setRawUsername(e.target.value);
   };
 
@@ -62,7 +62,14 @@ export function AuthForm() {
           return;
         }
 
-        // Check if display name is unique (using normalized name)
+        const trimmedFullName = rawFullName.trim();
+        if (trimmedFullName.length > 50) {
+          setError("Full Name cannot exceed 50 characters.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if display name (username) is unique
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("displayName", "==", normalizedUsername));
         const querySnapshot = await getDocs(q);
@@ -79,15 +86,17 @@ export function AuthForm() {
         }
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Firebase Auth displayName stores the unique, normalized username
         await updateProfile(userCredential.user, { 
-          displayName: normalizedUsername, // Store normalized username
+          displayName: normalizedUsername, 
           photoURL: DEFAULT_AVATAR_URL 
         });
         
         await setDoc(doc(db, "users", userCredential.user.uid), {
           uid: userCredential.user.uid,
           email: userCredential.user.email,
-          displayName: normalizedUsername, // Store normalized username
+          displayName: normalizedUsername, // This is the unique @username
+          fullName: trimmedFullName || '', // Store full name, default to empty string
           aura: 0,
           createdAt: serverTimestamp(),
           friends: [],
@@ -170,22 +179,39 @@ export function AuthForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {mode === "signup" && (
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                value={rawUsername}
-                onChange={handleUsernameChange}
-                placeholder="e.g., cosmic_baller.123"
-                required
-                className="bg-background/50"
-                aria-describedby="username-description"
-              />
-              <p id="username-description" className="text-xs text-muted-foreground">
-                3-20 characters. Lowercase letters, numbers, periods, and underscores only.
-              </p>
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name (Optional)</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={rawFullName}
+                  onChange={(e) => setRawFullName(e.target.value)}
+                  placeholder="e.g., Alex Cosmic"
+                  className="bg-background/50"
+                  aria-describedby="fullName-description"
+                />
+                <p id="fullName-description" className="text-xs text-muted-foreground">
+                  1-50 characters. Shown on your profile.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={rawUsername}
+                  onChange={handleUsernameChange}
+                  placeholder="e.g., alex_cosmic_123 (your unique ID)"
+                  required
+                  className="bg-background/50"
+                  aria-describedby="username-description"
+                />
+                <p id="username-description" className="text-xs text-muted-foreground">
+                  3-20 characters. Lowercase letters, numbers, periods, and underscores only.
+                </p>
+              </div>
+            </>
           )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -224,7 +250,8 @@ export function AuthForm() {
           onClick={() => {
             setMode(mode === "login" ? "signup" : "login");
             setError(null);
-            setRawUsername(""); // Clear username field on mode switch
+            setRawUsername(""); 
+            setRawFullName("");
           }}
           className="text-accent hover:text-primary"
         >

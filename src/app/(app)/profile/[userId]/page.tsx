@@ -25,7 +25,8 @@ const DEFAULT_BANNER_URL = "https://placehold.co/1200x300/FFFFFF/FFFFFF.png";
 
 interface UserProfileData {
   uid: string;
-  displayName: string;
+  displayName: string; // This is the unique @username
+  fullName?: string; // This is the new displayable full name
   email?: string;
   aura: number;
   avatarUrl?: string;
@@ -67,7 +68,8 @@ export default function UserProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const [isEditing, setIsEditing] = useState(false);
-  const [newDisplayName, setNewDisplayName] = useState('');
+  const [newFullName, setNewFullName] = useState('');
+  const [newDisplayName, setNewDisplayName] = useState(''); // For editing @username
   const [newAvatarUrl, setNewAvatarUrl] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newBannerUrl, setNewBannerUrl] = useState('');
@@ -85,15 +87,21 @@ export default function UserProfilePage() {
       let targetUserId: string | undefined = undefined;
       if (rawPageUserIdParam === 'me' && currentUser) {
         targetUserId = currentUser.uid;
-      } else {
+      } else if (rawPageUserIdParam) {
         targetUserId = rawPageUserIdParam;
       }
 
+
       if (!targetUserId) {
         if (!authLoading && rawPageUserIdParam === 'me' && !currentUser) {
-          router.push('/auth');
+          router.push('/auth'); // Redirect if trying to view 'me' but not logged in
+        } else if (!rawPageUserIdParam) {
+            toast({ title: "Error", description: "User ID not provided.", variant: "destructive" });
+            router.push('/dashboard');
         }
-        setIsLoading(false); 
+        // If targetUserId is still undefined after checks, it might be an invalid param or loading state
+        // Let it proceed to finally setIsLoading(false) if it's just authLoading
+        if (!authLoading) setIsLoading(false);
         return;
       }
 
@@ -104,6 +112,7 @@ export default function UserProfilePage() {
         if (userDocSnap.exists()) {
           const data = userDocSnap.data() as UserProfileData;
           setProfileData({ uid: userDocSnap.id, ...data });
+          setNewFullName(data.fullName || '');
           setNewDisplayName(data.displayName || '');
           setNewAvatarUrl(data.avatarUrl || DEFAULT_AVATAR_URL);
           setNewDescription(data.description || '');
@@ -114,6 +123,7 @@ export default function UserProfilePage() {
           return;
         }
 
+        // Fetch match history
         const q1 = query(collection(db, 'matches'), where('player1Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         const q2 = query(collection(db, 'matches'), where('player2Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         
@@ -186,6 +196,7 @@ export default function UserProfilePage() {
 
   const handleToggleEdit = () => {
     if (profileData) {
+      setNewFullName(profileData.fullName || '');
       setNewDisplayName(profileData.displayName || '');
       setNewAvatarUrl(profileData.avatarUrl || DEFAULT_AVATAR_URL);
       setNewDescription(profileData.description || '');
@@ -197,21 +208,39 @@ export default function UserProfilePage() {
   const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     if (!currentUser || !profileData) return;
-    if (!newDisplayName.trim()) {
+
+    const trimmedNewFullName = newFullName.trim();
+    if (trimmedNewFullName.length > 50) {
+      toast({ title: "Validation Error", description: "Full Name cannot exceed 50 characters.", variant: "destructive" });
+      return;
+    }
+    
+    const trimmedNewDisplayName = newDisplayName.trim();
+    const normalizedNewUsername = trimmedNewDisplayName.toLowerCase();
+
+    if (!trimmedNewDisplayName) {
       toast({ title: "Validation Error", description: "Username cannot be empty.", variant: "destructive" });
       return;
     }
+    if (!USERNAME_REGEX.test(normalizedNewUsername)) {
+        toast({ title: "Validation Error", description: "Username must be 3-20 characters and can only contain lowercase letters, numbers, periods (.), and underscores (_).", variant: "destructive" });
+        return;
+    }
+
 
     setIsUpdatingProfile(true);
     try {
-      if (newDisplayName.trim() !== profileData.displayName) {
+      let firebaseAuthDisplayNameUpdate = profileData.displayName; // Keep current auth display name unless username changes
+
+      if (normalizedNewUsername !== profileData.displayName) {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("displayName", "==", newDisplayName.trim()));
+        // Check uniqueness for the new username
+        const q = query(usersRef, where("displayName", "==", normalizedNewUsername));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           let nameTaken = false;
           querySnapshot.forEach((doc) => {
-            if (doc.id !== currentUser.uid) {
+            if (doc.id !== currentUser.uid) { // Check against other users
               nameTaken = true;
             }
           });
@@ -221,16 +250,25 @@ export default function UserProfilePage() {
             return;
           }
         }
+        // If username changes, update Firebase Auth displayName
+        await updateFirebaseProfile(auth.currentUser!, { 
+          displayName: normalizedNewUsername,
+        });
+        firebaseAuthDisplayNameUpdate = normalizedNewUsername;
       }
 
-      await updateFirebaseProfile(auth.currentUser!, { 
-        displayName: newDisplayName.trim(),
-        photoURL: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
-      });
+      // Update Firebase Auth photoURL if it changed
+      if ((newAvatarUrl.trim() || DEFAULT_AVATAR_URL) !== (profileData.avatarUrl || DEFAULT_AVATAR_URL)) {
+         await updateFirebaseProfile(auth.currentUser!, { 
+            photoURL: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
+        });
+      }
+
 
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, {
-        displayName: newDisplayName.trim(),
+        fullName: trimmedNewFullName,
+        displayName: normalizedNewUsername, // Store normalized username in Firestore
         avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim() || '',
@@ -238,7 +276,8 @@ export default function UserProfilePage() {
 
       setProfileData(prev => prev ? { 
         ...prev, 
-        displayName: newDisplayName.trim(), 
+        fullName: trimmedNewFullName,
+        displayName: normalizedNewUsername, 
         avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL,
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim() || '',
@@ -286,106 +325,113 @@ export default function UserProfilePage() {
                 layout="fill" 
                 objectFit="cover" 
                 priority={true}
+                data-ai-hint="abstract space"
               />
           )}
           {isOwnProfile && !isEditing && (
              <Button 
               variant="outline" 
               onClick={handleToggleEdit} 
-              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm"
+              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 rounded-lg text-xs sm:text-sm"
             >
               <Edit3 className="h-4 w-4 sm:mr-0 md:mr-2" />
               <span className="hidden md:inline">Edit Profile</span>
             </Button>
           )}
         </div>
+        
+        {/* Avatar Section - Overlaps Banner */}
+        <div className="relative px-4 md:px-6 -mt-12 md:-mt-16">
+          {isEditing && isOwnProfile ? (
+            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+              <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
+            </div>
+          ) : (
+            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+              <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} alt={profileData.displayName} />
+              <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+            </Avatar>
+          )}
+        </div>
 
-        {/* Avatar and User Info Section */}
-        <div className="px-4 md:px-6">
-          <div className="-mt-12 md:-mt-16 relative z-0"> {/* z-0 to allow avatar border to be under content card later if needed */}
-            {isEditing && isOwnProfile ? (
-                <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-                  <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-                </div>
-              ) : (
-                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-                  <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
-                  <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-                </Avatar>
-              )}
-          </div>
-
-          <div className="mt-4 mb-4">
-            <h1 className="text-2xl md:text-3xl font-bold">{profileData.displayName}</h1>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
-              <p>@{profileData.displayName}</p>
-              {profileData.isCertifiedHooper && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <BadgeCheck className="h-5 w-5 text-blue-400" />
-                  </TooltipTrigger>
-                  <TooltipContent><p>Certified Hooper</p></TooltipContent>
-                </Tooltip>
-              )}
-              {profileData.isCosmicMarshall && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <ShieldCheck className="h-5 w-5 text-orange-400" />
-                  </TooltipTrigger>
-                  <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
-                </Tooltip>
-              )}
-              <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
-                <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
-                <span>{profileData.aura} Aura</span>
-              </div>
+        {/* User Info - Name, @username, Badges, Aura */}
+        <div className="px-4 md:px-6 mt-4">
+          <h1 className="text-2xl md:text-3xl font-bold">{profileData.fullName || profileData.displayName}</h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
+            <p>@{profileData.displayName}</p>
+            {profileData.isCertifiedHooper && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <BadgeCheck className="h-5 w-5 text-blue-400" />
+                </TooltipTrigger>
+                <TooltipContent><p>Certified Hooper</p></TooltipContent>
+              </Tooltip>
+            )}
+            {profileData.isCosmicMarshall && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <ShieldCheck className="h-5 w-5 text-orange-400" />
+                </TooltipTrigger>
+                <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
+              </Tooltip>
+            )}
+            <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
+              <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
+              <span>{profileData.aura} Aura</span>
             </div>
           </div>
         </div>
       
-        {/* Description or Edit Form Section */}
-        <div className="px-4 md:px-6 mt-6">
+        {/* Description Card or Edit Form Section */}
+        <Card className="bg-card/50 backdrop-blur-sm mx-4 md:mx-6 mt-8">
           {isEditing && isOwnProfile ? (
-            <form onSubmit={handleUpdateProfile} className="space-y-6 bg-card/50 backdrop-blur-sm p-4 md:p-6 rounded-lg">
-              <div>
-                <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
-                <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your new cosmic alias" className="bg-background/50 mt-1" required />
-                <p className="text-xs text-muted-foreground mt-1">Username must be unique and will be checked upon saving.</p>
-              </div>
-              <div>
-                <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
-                <Input id="newAvatarUrl" type="url" value={newAvatarUrl} onChange={(e) => setNewAvatarUrl(e.target.value)} placeholder="https://example.com/avatar.png" className="bg-background/50 mt-1" />
-                <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar. Defaults to Cosmic Hoops standard if empty.</p>
-              </div>
-              <div>
-                <Label htmlFor="newBannerUrl" className="text-foreground/80">Banner Image URL</Label>
-                <Input id="newBannerUrl" type="url" value={newBannerUrl} onChange={(e) => setNewBannerUrl(e.target.value)} placeholder="https://example.com/banner.png" className="bg-background/50 mt-1" />
-                <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner. Defaults to a plain white banner.</p>
-              </div>
-              <div>
-                <Label htmlFor="newDescription" className="text-foreground/80">Profile Description</Label>
-                <Textarea id="newDescription" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Tell us about your cosmic journey..." className="bg-background/50 mt-1" rows={3} />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleToggleEdit} disabled={isUpdatingProfile}><X className="mr-2 h-4 w-4" /> Cancel</Button>
-                <Button type="submit" disabled={isUpdatingProfile} className="glow-accent">{isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes</Button>
-              </div>
-            </form>
+            <CardContent className="p-6">
+              <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <div>
+                  <Label htmlFor="newFullName" className="text-foreground/80">Full Name</Label>
+                  <Input id="newFullName" type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} placeholder="Your full name (e.g. Alex Cosmic)" className="bg-background/50 mt-1" />
+                  <p className="text-xs text-muted-foreground mt-1">1-50 characters. This is how others will see you.</p>
+                </div>
+                <div>
+                  <Label htmlFor="newDisplayName" className="text-foreground/80">Username (@)</Label>
+                  <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your unique username (e.g. alex_cosmic)" className="bg-background/50 mt-1" required />
+                  <p className="text-xs text-muted-foreground mt-1">3-20 characters. Lowercase, numbers, '.', or '_'. This is your unique ID.</p>
+                </div>
+                <div>
+                  <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
+                  <Input id="newAvatarUrl" type="url" value={newAvatarUrl} onChange={(e) => setNewAvatarUrl(e.target.value)} placeholder="https://example.com/avatar.png" className="bg-background/50 mt-1" />
+                  <p className="text-xs text-muted-foreground mt-1">Enter a URL for your avatar.</p>
+                </div>
+                <div>
+                  <Label htmlFor="newBannerUrl" className="text-foreground/80">Banner Image URL</Label>
+                  <Input id="newBannerUrl" type="url" value={newBannerUrl} onChange={(e) => setNewBannerUrl(e.target.value)} placeholder="https://example.com/banner.png" className="bg-background/50 mt-1" />
+                  <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner.</p>
+                </div>
+                <div>
+                  <Label htmlFor="newDescription" className="text-foreground/80">Profile Description</Label>
+                  <Textarea id="newDescription" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Tell us about your cosmic journey..." className="bg-background/50 mt-1" rows={3} />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={handleToggleEdit} disabled={isUpdatingProfile}><X className="mr-2 h-4 w-4" /> Cancel</Button>
+                  <Button type="submit" disabled={isUpdatingProfile} className="glow-accent">{isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes</Button>
+                </div>
+              </form>
+            </CardContent>
           ) : (
-            <Card className="bg-card/50">
-              <CardContent className="pt-6">
+            <>
+              <CardContent className="p-6">
                 <p className="text-foreground/80 prose prose-invert max-w-none">{profileData.description || "No description provided yet."}</p>
-                {isOwnProfile && (
-                  <div className="mt-6 sm:hidden"> {/* Mobile Logout Button */}
-                    <Button variant="outline" onClick={handleLogout} className="w-full rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">
-                      <LogOut className="mr-2 h-4 w-4" /> Logout
-                    </Button>
-                  </div>
-                )}
               </CardContent>
-            </Card>
+              {isOwnProfile && (
+                <CardFooter className="sm:hidden px-6 pb-6 pt-0"> {/* Mobile Logout Button inside card */}
+                  <Button variant="outline" onClick={handleLogout} className="w-full rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </Button>
+                </CardFooter>
+              )}
+            </>
           )}
-        </div>
+        </Card>
       
         {/* Separator and H2H/Match History cards */}
         <div className="px-4 md:px-6 mt-6">
