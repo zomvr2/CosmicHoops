@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
+const USERNAME_REGEX = /^[a-z0-9._]{3,20}$/;
 
 export function AuthForm() {
   const router = useRouter();
@@ -27,10 +28,15 @@ export function AuthForm() {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [rawUsername, setRawUsername] = useState(""); // Store raw input for controlled component
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow users to type uppercase, but it will be normalized on submit
+    setRawUsername(e.target.value);
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -39,15 +45,26 @@ export function AuthForm() {
 
     try {
       if (mode === "signup") {
-        if (!displayName.trim()) {
+        const trimmedUsername = rawUsername.trim();
+        if (!trimmedUsername) {
           setError("Username is required.");
           setIsLoading(false);
           return;
         }
 
-        // Check if display name is unique
+        const normalizedUsername = trimmedUsername.toLowerCase();
+
+        if (!USERNAME_REGEX.test(normalizedUsername)) {
+          setError(
+            "Username must be 3-20 characters and can only contain lowercase letters, numbers, periods (.), and underscores (_)."
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if display name is unique (using normalized name)
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("displayName", "==", displayName.trim()));
+        const q = query(usersRef, where("displayName", "==", normalizedUsername));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
@@ -63,23 +80,22 @@ export function AuthForm() {
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { 
-          displayName: displayName.trim(),
+          displayName: normalizedUsername, // Store normalized username
           photoURL: DEFAULT_AVATAR_URL 
         });
         
-        // Create user document in Firestore
         await setDoc(doc(db, "users", userCredential.user.uid), {
           uid: userCredential.user.uid,
           email: userCredential.user.email,
-          displayName: displayName.trim(),
+          displayName: normalizedUsername, // Store normalized username
           aura: 0,
           createdAt: serverTimestamp(),
           friends: [],
           description: "",
           bannerUrl: "",
           avatarUrl: DEFAULT_AVATAR_URL,
-          isCertifiedHooper: false, // Initialize badge field
-          isCosmicMarshall: false,  // Initialize badge field
+          isCertifiedHooper: false,
+          isCosmicMarshall: false,
         });
 
         await sendEmailVerification(userCredential.user);
@@ -104,7 +120,6 @@ export function AuthForm() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      // Handle Firebase specific errors more gracefully
       let errorMessage = "An unknown error occurred.";
       if (err.code) {
         switch (err.code) {
@@ -118,11 +133,11 @@ export function AuthForm() {
             errorMessage = "Email/password accounts are not enabled.";
             break;
           case "auth/weak-password":
-            errorMessage = "The password is too weak.";
+            errorMessage = "The password is too weak (min. 6 characters).";
             break;
           case "auth/user-not-found":
           case "auth/wrong-password":
-          case "auth/invalid-credential": // For newer Firebase versions
+          case "auth/invalid-credential": 
             errorMessage = "Invalid login credentials. Please check your email and password.";
             break;
           default:
@@ -156,16 +171,20 @@ export function AuthForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {mode === "signup" && (
             <div className="space-y-2">
-              <Label htmlFor="displayName">Username</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="displayName"
+                id="username"
                 type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="CosmicBaller123"
+                value={rawUsername}
+                onChange={handleUsernameChange}
+                placeholder="e.g., cosmic_baller.123"
                 required
                 className="bg-background/50"
+                aria-describedby="username-description"
               />
+              <p id="username-description" className="text-xs text-muted-foreground">
+                3-20 characters. Lowercase letters, numbers, periods, and underscores only.
+              </p>
             </div>
           )}
           <div className="space-y-2">
@@ -187,7 +206,7 @@ export function AuthForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="•••••••• (min. 6 characters)"
               required
               className="bg-background/50"
             />
@@ -205,6 +224,7 @@ export function AuthForm() {
           onClick={() => {
             setMode(mode === "login" ? "signup" : "login");
             setError(null);
+            setRawUsername(""); // Clear username field on mode switch
           }}
           className="text-accent hover:text-primary"
         >
