@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Swords, Users, Bell, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import React from "react"; // Import React for React.Fragment
 
 interface NavItem {
   href: string;
@@ -37,8 +38,8 @@ export function BottomNav() {
           // Insert a spacer after the second item (Friends)
           if (index === 1) { // After "Friends"
             return (
-              <>
-                <li key={item.href} className="flex-1 text-center">
+              <React.Fragment key={item.href}> {/* Added key to the Fragment */}
+                <li key={item.href + "_item"} className="flex-1 text-center"> {/* Ensured inner li key is distinct if needed, or kept original */}
                   <Link href={item.href} className="flex flex-col items-center justify-center p-2 rounded-md">
                     <item.icon
                       className={cn(
@@ -58,7 +59,7 @@ export function BottomNav() {
                 </li>
                 {/* Spacer for the lifted button area. Adjust width as needed. */}
                 <li key="spacer" className="w-14 h-full" aria-hidden="true" /> 
-              </>
+              </React.Fragment>
             );
           }
           return (
