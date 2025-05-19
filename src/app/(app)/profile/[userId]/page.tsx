@@ -21,13 +21,13 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { Separator } from '@/components/ui/separator';
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
-const DEFAULT_BANNER_URL = "https://placehold.co/1200x300/FFFFFF/FFFFFF.png"; 
+const DEFAULT_BANNER_URL = "https://placehold.co/1200x300/FFFFFF/FFFFFF.png";
 const USERNAME_REGEX = /^[a-z0-9._]{3,20}$/;
 
 interface UserProfileData {
   uid: string;
-  displayName: string; // This is the unique @username
-  fullName?: string; // This is the new displayable full name
+  displayName: string;
+  fullName?: string;
   email?: string;
   aura: number;
   avatarUrl?: string;
@@ -70,7 +70,7 @@ export default function UserProfilePage() {
   
   const [isEditing, setIsEditing] = useState(false);
   const [newFullName, setNewFullName] = useState('');
-  const [newDisplayName, setNewDisplayName] = useState(''); // For editing @username
+  const [newDisplayName, setNewDisplayName] = useState('');
   const [newAvatarUrl, setNewAvatarUrl] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newBannerUrl, setNewBannerUrl] = useState('');
@@ -88,7 +88,7 @@ export default function UserProfilePage() {
       let targetUserId: string | undefined = undefined;
       if (rawPageUserIdParam === 'me' && currentUser) {
         targetUserId = currentUser.uid;
-      } else if (rawPageUserIdParam) {
+      } else if (rawPageUserIdParam && rawPageUserIdParam !== 'me') {
         targetUserId = rawPageUserIdParam;
       }
 
@@ -96,11 +96,11 @@ export default function UserProfilePage() {
       if (!targetUserId) {
         if (!authLoading && rawPageUserIdParam === 'me' && !currentUser) {
           router.push('/auth'); 
-        } else if (!rawPageUserIdParam) {
+        } else if (!authLoading && !rawPageUserIdParam) { // Ensure we don't push if auth is still loading
             toast({ title: "Error", description: "User ID not provided.", variant: "destructive" });
             router.push('/dashboard');
         }
-        if (!authLoading) setIsLoading(false);
+        if (!authLoading) setIsLoading(false); // Stop loading if we can't proceed
         return;
       }
 
@@ -247,15 +247,21 @@ export default function UserProfilePage() {
             return;
           }
         }
-        await updateFirebaseProfile(auth.currentUser!, { 
-          displayName: normalizedNewUsername,
-        });
-        firebaseAuthDisplayNameUpdate = normalizedNewUsername;
+        // Only update Firebase Auth displayName if it's actually being changed
+        if (auth.currentUser && auth.currentUser.displayName !== normalizedNewUsername) {
+            await updateFirebaseProfile(auth.currentUser, { 
+              displayName: normalizedNewUsername,
+            });
+        }
+        firebaseAuthDisplayNameUpdate = normalizedNewUsername; // To update local state
       }
 
-      if ((newAvatarUrl.trim() || DEFAULT_AVATAR_URL) !== (profileData.avatarUrl || DEFAULT_AVATAR_URL)) {
-         await updateFirebaseProfile(auth.currentUser!, { 
-            photoURL: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
+      // Only update Firebase Auth photoURL if it's being changed AND if it's different from existing
+      const currentAuthPhotoURL = auth.currentUser?.photoURL || DEFAULT_AVATAR_URL;
+      const newPhotoURLToSet = newAvatarUrl.trim() || DEFAULT_AVATAR_URL;
+      if (auth.currentUser && newPhotoURLToSet !== currentAuthPhotoURL) {
+         await updateFirebaseProfile(auth.currentUser, { 
+            photoURL: newPhotoURLToSet, 
         });
       }
 
@@ -305,7 +311,7 @@ export default function UserProfilePage() {
 
   const isOwnProfile = currentUser?.uid === profileData.uid;
   const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || '') : (profileData.bannerUrl || '');
-  const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-accent';
+  const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
   const auraIconColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
   const mainDisplayName = profileData.fullName || profileData.displayName;
 
@@ -338,7 +344,7 @@ export default function UserProfilePage() {
         </div>
         
         {/* Avatar Section - Overlaps Banner */}
-        <div className="relative px-4 md:px-6 -mt-12 md:-mt-16">
+        <div className="relative px-4 md:px-6 -mt-24 md:-mt-28">
           <div className="relative h-24 w-24 md:h-32 md:w-32">
             {isEditing && isOwnProfile ? (
               <div className="h-full w-full rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
@@ -355,9 +361,9 @@ export default function UserProfilePage() {
 
         {/* User Info - Name, @username, Badges, Aura */}
         <div className="px-4 md:px-6 mt-4">
-          <h1 className="text-2xl md:text-3xl font-bold">{mainDisplayName}</h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1 mb-3">
-            <p>@{profileData.displayName}</p>
+          <h1 className="text-2xl md:text-3xl font-bold leading-tight">{mainDisplayName}</h1>
+          <p className="text-muted-foreground">@{profileData.displayName}</p>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 mb-3">
             {profileData.isCertifiedHooper && (
               <Tooltip>
                 <TooltipTrigger>
@@ -374,11 +380,12 @@ export default function UserProfilePage() {
                 <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
               </Tooltip>
             )}
-             <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
-              <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
-              <span>{profileData.aura} Aura</span>
-            </div>
           </div>
+           {/* Aura points always displayed */}
+           <div className={`flex items-center text-sm font-bold ${auraDisplayColor} mt-1`}> {/* Added mt-1 for spacing */}
+             <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} aria-hidden="true"/>
+             <span>{profileData.aura} Aura</span>
+           </div>
         </div>
       
         {/* Description Card or Edit Form Section */}
@@ -395,7 +402,7 @@ export default function UserProfilePage() {
                   <Label htmlFor="newDisplayName" className="text-foreground/80">Username (@)</Label>
                   <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your unique username (e.g. alex_cosmic)" className="bg-background/50 mt-1" required />
                   <p className="text-xs text-muted-foreground mt-1">3-20 characters. Lowercase, numbers, '.', or '_'. This is your unique ID.</p>
-                   <p className="text-xs text-muted-foreground mt-1">Username must be unique and will be checked upon saving.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Username must be unique and will be checked upon saving.</p>
                 </div>
                 <div>
                   <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
@@ -510,5 +517,3 @@ export default function UserProfilePage() {
     </TooltipProvider>
   );
 }
-
-    
