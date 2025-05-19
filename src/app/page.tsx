@@ -51,7 +51,7 @@ export default function HomePage() {
       </header>
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-20 md:py-32 lg:py-40 xl:py-48 flex flex-col items-center text-center relative overflow-hidden">
+        <section className="w-full py-12 md:py-20 lg:py-28 xl:py-32 flex flex-col items-center text-center relative overflow-hidden">
            <div
             aria-hidden="true"
             className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 transition-opacity duration-500 group-hover:opacity-50 dark:opacity-20"
@@ -81,7 +81,7 @@ export default function HomePage() {
               </Button>
             </div>
 
-            <div className="mt-24 text-center"> {/* Increased top margin for "Keep scrolling" */}
+            <div className="mt-16 text-center"> {/* Reduced top margin */}
               <p className="text-sm text-muted-foreground mb-2">Keep scrolling to discover more</p>
               <ArrowDown className="h-6 w-6 mx-auto text-primary animate-bounce" />
             </div>
