@@ -8,7 +8,7 @@ import { ChevronRight, Swords, Sparkles, MessageSquareText, Users, CheckCircle, 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from "@/lib/utils";
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
-import React from 'react'; // Import React for useState if needed, though Sheet may handle its own state
+import React from 'react'; 
 
 interface FeatureCardProps {
   icon: React.ElementType;
@@ -59,7 +59,7 @@ export default function HomePage() {
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-card">
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-card" accessibleTitle="Main Menu">
               <div className="p-6">
                 <Link href="/" className="mb-6 block">
                   <Logo size="small" />
@@ -90,7 +90,7 @@ export default function HomePage() {
       </header>
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-20 lg:py-24 xl:py-28 flex flex-col items-center text-center relative overflow-hidden">
+        <section className="w-full py-16 md:py-20 lg:py-24 flex flex-col items-center text-center relative overflow-hidden">
            <div
             aria-hidden="true"
             className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 transition-opacity duration-500 group-hover:opacity-50 dark:opacity-20"
@@ -120,7 +120,7 @@ export default function HomePage() {
               </Button>
             </div>
 
-            <div className="mt-12 text-center"> {/* Reduced top margin */}
+            <div className="mt-16 text-center"> 
               <p className="text-sm text-muted-foreground mb-2">Keep scrolling to discover more</p>
               <ArrowDown className="h-6 w-6 mx-auto text-primary animate-bounce" />
             </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
                   alt="Cosmic Hoops App Screenshot Mockup"
                   width={400}
                   height={400}
-                  data-ai-hint="app screen basketball stats"
+                  data-ai-hint="cosmic basketball"
                   className="rounded-xl opacity-80"
                 />
               </div>
