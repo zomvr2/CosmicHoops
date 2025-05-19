@@ -36,7 +36,7 @@ export default function FriendsPage() {
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]); // Track sent requests status
-  const [searchEmail, setSearchEmail] = useState('');
+  const [searchUsername, setSearchUsername] = useState('');
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState({
     friends: true,
@@ -108,11 +108,11 @@ export default function FriendsPage() {
 
   const handleSearchUser = async (e: FormEvent) => {
     e.preventDefault();
-    if (!searchEmail.trim() || !user) return;
+    if (!searchUsername.trim() || !user) return;
     setIsLoading(prev => ({ ...prev, search: true }));
     setSearchResults([]);
     try {
-      const q = query(collection(db, 'users'), where('email', '==', searchEmail.trim()));
+      const q = query(collection(db, 'users'), where('displayName', '==', searchUsername.trim()));
       const querySnapshot = await getDocs(q);
       const results: UserProfile[] = [];
       querySnapshot.forEach((doc) => {
@@ -122,7 +122,7 @@ export default function FriendsPage() {
       });
       setSearchResults(results);
       if (results.length === 0) {
-        toast({ title: "Not Found", description: "No user found with that email." });
+        toast({ title: "Not Found", description: "No user found with that username." });
       }
     } catch (error) {
       console.error("Error searching user:", error);
@@ -334,17 +334,17 @@ export default function FriendsPage() {
 
         <TabsContent value="add-friend" className="mt-4">
           <Card className="bg-card/50">
-            <CardHeader><CardTitle>Find New Hoopers</CardTitle><CardDescription>Search for users by their email address.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Find New Hoopers</CardTitle><CardDescription>Search for users by their username.</CardDescription></CardHeader>
             <CardContent>
               <form onSubmit={handleSearchUser} className="flex space-x-2 mb-6">
                 <Input
-                  type="email"
-                  placeholder="Enter user's email"
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
+                  type="text"
+                  placeholder="Enter user's username"
+                  value={searchUsername}
+                  onChange={(e) => setSearchUsername(e.target.value)}
                   className="bg-background/50"
                 />
-                <Button type="submit" disabled={isLoading.search || !searchEmail.trim()} className="glow-accent">
+                <Button type="submit" disabled={isLoading.search || !searchUsername.trim()} className="glow-accent">
                   {isLoading.search ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </Button>
               </form>
@@ -381,6 +381,3 @@ export default function FriendsPage() {
     </div>
   );
 }
-
-
-    
