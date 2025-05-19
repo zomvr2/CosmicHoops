@@ -13,13 +13,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
-
-const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
 interface NavItem {
   href: string;
@@ -30,7 +27,7 @@ interface NavItem {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth(); // Get user for avatar
+  const { user } = useAuth(); 
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -42,7 +39,7 @@ export function BottomNav() {
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/friends", label: "Friends", icon: Users },
     { href: "/notifications", label: "Notifications", icon: Bell },
-    { href: "/profile/me", label: "Profile", icon: UserCircle }, // Icon is placeholder, will be replaced by Avatar
+    { href: "/profile/me", label: "Profile", icon: UserCircle }, 
   ];
 
   const startMatchItem: NavItem = { href: "/start-match", label: "Start Match", icon: Swords };
@@ -52,32 +49,37 @@ export function BottomNav() {
       <ul className="flex justify-around items-center h-full px-1">
         {regularNavItems.map((item, index) => {
           const isActive =
-            pathname === item.href ||
-            (item.href === "/dashboard" && pathname.startsWith("/dashboard")) ||
-            (item.href === "/profile/me" && pathname.startsWith("/profile"));
+            (item.href === "/dashboard" && pathname === item.href) || // Exact match for dashboard
+            (item.href !== "/dashboard" && pathname.startsWith(item.href)); // StartsWith for others like /profile or /friends
 
           let itemContent;
 
           if (item.label === "Profile") {
-            // Special rendering for Profile item using Avatar
             itemContent = (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     className={cn(
-                      "flex flex-col items-center justify-center p-1 rounded-md w-full h-full transition-colors focus-visible:ring-0 focus-visible:ring-offset-0",
-                      // No specific active styling for the trigger itself, menu indicates context
-                      "text-muted-foreground hover:text-foreground"
+                      "group flex flex-col items-center justify-center p-2 rounded-md w-full h-full",
+                      "focus-visible:ring-0 focus-visible:ring-offset-0" // Minimal focus appearance
                     )}
-                    aria-label="Profile Menu"
+                    aria-label={item.label}
                   >
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={user?.photoURL || DEFAULT_AVATAR_URL} alt={user?.displayName || "User Avatar"}/>
-                      <AvatarFallback>{user?.displayName?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-                    </Avatar>
-                    {/* Optional: Small label if desired, or remove for icon-only */}
-                    {/* <span className="text-[10px] mt-0.5">Me</span> */}
+                    <item.icon 
+                      className={cn(
+                        "h-6 w-6 mb-0.5 transition-colors",
+                        isActive ? "text-primary text-glow-primary" : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-xs transition-colors",
+                        isActive ? "text-primary font-medium" : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="center" className="mb-2 w-40">
@@ -95,17 +97,17 @@ export function BottomNav() {
           } else {
             // Standard rendering for other items
             itemContent = (
-              <Link href={item.href} className="flex flex-col items-center justify-center p-2 rounded-md w-full h-full">
+              <Link href={item.href} className="group flex flex-col items-center justify-center p-2 rounded-md w-full h-full">
                 <item.icon
                   className={cn(
                     "h-6 w-6 mb-0.5 transition-colors",
-                    isActive ? "text-primary text-glow-primary" : "text-muted-foreground hover:text-foreground"
+                    isActive ? "text-primary text-glow-primary" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
                 <span
                   className={cn(
                     "text-xs transition-colors",
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 >
                   {item.label}
