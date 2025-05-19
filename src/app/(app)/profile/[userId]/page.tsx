@@ -279,8 +279,8 @@ export default function UserProfilePage() {
   return (
     <TooltipProvider>
     <div className="space-y-8">
-      <div className="relative">
-        {/* Banner */}
+      {/* Banner and Edit Button */}
+      <div className="relative rounded-lg overflow-hidden">
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
            <Image 
              src={isEditing ? (newBannerUrl || DEFAULT_BANNER_URL) : (profileData.bannerUrl || DEFAULT_BANNER_URL)} 
@@ -292,56 +292,66 @@ export default function UserProfilePage() {
              priority={true}
            />
         </div>
+        {isOwnProfile && !isEditing && (
+          <Button 
+            variant="outline" 
+            onClick={handleToggleEdit} 
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-background/70 text-foreground hover:bg-background/80 px-2.5 py-1.5 sm:px-3 sm:py-2 h-auto"
+          >
+            <Edit3 className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Edit Profile</span>
+          </Button>
+        )}
+      </div>
 
-        {/* Avatar and Username */}
-        <div className="relative px-4">
-          <div className="flex justify-center -mt-12 md:-mt-16 relative z-10">
-            {isEditing ? (
-                <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-                    <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-                </div>
-            ) : (
-                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-                    <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
-                    <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-                </Avatar>
-            )}
-          </div>
-          {!isEditing && (
-            <div className="text-center mt-3">
-              <div className="flex items-center justify-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold">{profileData.displayName}</h1>
-                {profileData.isCertifiedHooper && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <BadgeCheck className="h-6 w-6 md:h-7 md:h-7 text-blue-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Certified Hooper</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                 {profileData.isCosmicMarshall && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <ShieldCheck className="h-6 w-6 md:h-7 md:h-7 text-orange-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Cosmic Marshall</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+      {/* Avatar and Username */}
+      <div className="relative px-4 -mt-16 md:-mt-20"> {/* Increased negative margin for more overlap */}
+        <div className="flex justify-center relative z-10">
+          {isEditing ? (
+              <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+                  <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
               </div>
-            </div>
+          ) : (
+              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+                  <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+                  <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+              </Avatar>
           )}
         </div>
+        {!isEditing && (
+          <div className="text-center mt-3">
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-bold">{profileData.displayName}</h1>
+              {profileData.isCertifiedHooper && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <BadgeCheck className="h-6 w-6 md:h-7 md:h-7 text-blue-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Certified Hooper</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+               {profileData.isCosmicMarshall && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ShieldCheck className="h-6 w-6 md:h-7 md:h-7 text-orange-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Cosmic Marshall</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Profile Content Card */}
-      <Card className="bg-card/70 backdrop-blur-md -mt-8 md:-mt-10">
-        <CardContent className="pt-4 relative">
+      <Card className="bg-card/70 backdrop-blur-md -mt-8"> {/* Adjusted top margin */}
+        <CardContent className="pt-4 relative"> {/* Reduced top padding */}
           {isEditing && isOwnProfile ? (
-            <form onSubmit={handleUpdateProfile} className="space-y-6 pt-2"> {/* Added pt-2 here for spacing when form is visible */}
+            <form onSubmit={handleUpdateProfile} className="space-y-6 pt-2">
               <div>
                 <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
                 <Input
@@ -402,36 +412,24 @@ export default function UserProfilePage() {
             </form>
           ) : (
             <>
-              {/* Desktop: Edit Profile Button (Top Right) */}
-              {isOwnProfile && (
-                <div className="hidden sm:flex sm:absolute sm:top-4 sm:right-4">
-                  <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
-                    <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
-                  </Button>
-                </div>
-              )}
-              
               {profileData.aura !== 0 && (
-                <div className="flex items-center justify-center sm:justify-start text-2xl font-bold mb-4"> {/* Aura points */}
+                <div className="flex items-center justify-center sm:justify-start text-2xl font-bold mb-4 text-center sm:text-left">
                   <Sparkles className={`w-8 h-8 mr-2 ${auraIconColor}`} />
                   <span className={auraDisplayColor}>{profileData.aura} Aura</span>
                 </div>
               )}
 
               {profileData.description && (
-                <p className="text-foreground/80 prose prose-invert max-w-none mb-6">{profileData.description}</p>
+                <p className="text-foreground/80 prose prose-invert max-w-none mb-6 text-center sm:text-left">{profileData.description}</p>
               )}
               {!profileData.description && (
-                 <p className="text-muted-foreground italic mb-6">No description provided yet.</p>
+                 <p className="text-muted-foreground italic mb-6 text-center sm:text-left">No description provided yet.</p>
               )}
 
-              {/* Mobile: Edit Profile & Logout Buttons (Below Description, 50/50) */}
+              {/* Mobile: Logout Button (Edit button is on banner) */}
               {isOwnProfile && (
-                 <div className="flex gap-3 w-full mt-4 sm:hidden">
-                    <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 border-accent text-accent hover:bg-accent/10">
-                        <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
-                    </Button>
-                    <Button variant="outline" onClick={handleLogout} className="w-1/2 text-red-400 border-red-400 hover:bg-red-400/10">
+                 <div className="mt-6 flex w-full gap-3 sm:hidden">
+                    <Button variant="outline" onClick={handleLogout} className="w-full text-red-400 border-red-400 hover:bg-red-400/10">
                         <LogOut className="mr-2 h-4 w-4" /> Logout
                     </Button>
                 </div>
@@ -507,9 +505,7 @@ export default function UserProfilePage() {
                 const opponentScore = isPlayer1ProfileUser ? match.player2Score : match.player1Score;
                 const didProfileUserWin = match.winnerId === profileData.uid;
 
-                // Format date properly, handling potential nulls from Firestore serverTimestamp
                 const matchDate = match.createdAt?.toDate ? new Date(match.createdAt.toDate()).toLocaleDateString() : 'A while ago';
-
 
                 return (
                   <li key={match.id} className="p-4 bg-muted/30 rounded-lg">
@@ -547,6 +543,3 @@ export default function UserProfilePage() {
     </TooltipProvider>
   );
 }
-
-
-    
