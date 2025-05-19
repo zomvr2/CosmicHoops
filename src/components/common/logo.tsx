@@ -19,8 +19,7 @@ export function Logo({ className, size = 'medium', ...props }: LogoProps) {
       )}
       {...props}
     >
-      <span className="sm:hidden">CH</span>
-      <span className="hidden sm:inline">Cosmic Hoops</span>
+      <span>Cosmic Hoops</span>
     </div>
   );
 }
