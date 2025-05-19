@@ -9,7 +9,7 @@ import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, Timesta
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart, Swords, Users, Star, Loader2 } from "lucide-react";
+import { BarChart, Swords, Users, Sparkles, Loader2 } from "lucide-react"; // Changed Star to Sparkles
 import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -127,7 +127,7 @@ export default function DashboardPage() {
         <CardContent className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center text-2xl font-bold text-accent">
-              <Star className="w-7 h-7 mr-2 text-glow-accent" />
+              <Sparkles className="w-7 h-7 mr-2 text-glow-accent" /> {/* Changed Star to Sparkles */}
               {isLoadingAura ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (

@@ -12,12 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Star, Swords, Edit3, UserCircle, BarChart3, Save, X } from 'lucide-react';
+import { Loader2, Sparkles, Swords, Edit3, UserCircle, BarChart3, Save, X, BadgeCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDistanceToNow } from 'date-fns';
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UserProfileData {
   uid: string;
@@ -267,18 +267,18 @@ export default function UserProfilePage() {
       <Card className="bg-card/70 backdrop-blur-md shadow-2xl overflow-hidden">
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
            <Image 
-             src={profileData.bannerUrl || "https://placehold.co/1200x300.png?text=No+Banner"} 
-             data-ai-hint="galaxy nebula space" 
+             src={profileData.bannerUrl || "https://placehold.co/1200x300.png"} 
+             data-ai-hint="galaxy nebula" 
              alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
              layout="fill" 
              objectFit="cover" 
              className="opacity-50" 
-             priority={true} // Consider adding for LCP if this is a primary image
+             priority={true}
            />
            <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end space-x-4">
             {!isEditing ? (
               <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-                <AvatarImage src={profileData.avatarUrl || `https://placehold.co/128x128.png?text=${profileData.displayName?.[0]}`} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+                <AvatarImage src={profileData.avatarUrl || `https://placehold.co/128x128.png`} data-ai-hint="abstract avatar" alt={profileData.displayName} />
                 <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
               </Avatar>
             ) : (
@@ -288,11 +288,23 @@ export default function UserProfilePage() {
             )}
             <div>
               {!isEditing ? (
-                <CardTitle className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">{profileData.displayName}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">{profileData.displayName}</CardTitle>
+                  {isOwnProfile && currentUser?.emailVerified && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <BadgeCheck className="h-7 w-7 md:h-8 md:w-8 text-blue-400 drop-shadow-lg" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Certified Hooper</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               ) : (
                 <div className="pb-2"> {/* Placeholder for spacing if needed */} </div>
               )}
-              <CardDescription className="text-primary-foreground/80 drop-shadow-sm">Joined {profileData.createdAt?.toDate ? formatDistanceToNow(profileData.createdAt.toDate(), {addSuffix: true}) : 'the cosmos'}</CardDescription>
+              {/* Removed CardDescription for join date */}
             </div>
            </div>
         </div>
@@ -358,19 +370,19 @@ export default function UserProfilePage() {
             </form>
           ) : (
             <>
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center text-2xl font-bold text-accent">
-                  <Star className="w-8 h-8 mr-2 text-glow-accent" />
+                  <Sparkles className="w-8 h-8 mr-2 text-glow-accent" />
                   <span>{profileData.aura} Aura</span>
                 </div>
                 {isOwnProfile && (
-                  <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
+                  <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10 self-start md:self-center">
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
                 )}
               </div>
               {profileData.description && (
-                <p className="mt-6 text-foreground/80 md:text-left text-center">{profileData.description}</p>
+                <p className="mt-6 text-foreground/80 md:text-left text-center prose prose-invert max-w-none">{profileData.description}</p>
               )}
               {!profileData.description && (
                  <p className="mt-6 text-muted-foreground md:text-left text-center italic">No description provided yet.</p>
@@ -446,6 +458,10 @@ export default function UserProfilePage() {
                 const opponentScore = isPlayer1ProfileUser ? match.player2Score : match.player1Score;
                 const didProfileUserWin = match.winnerId === profileData.uid;
 
+                // Format date properly, handling potential nulls from Firestore serverTimestamp
+                const matchDate = match.createdAt?.toDate ? new Date(match.createdAt.toDate()).toLocaleDateString() : 'A while ago';
+
+
                 return (
                   <li key={match.id} className="p-4 bg-muted/30 rounded-lg shadow-md hover:shadow-primary/30 transition-shadow">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -457,7 +473,7 @@ export default function UserProfilePage() {
                           {didProfileUserWin ? 'Victory' : 'Defeat'} ({profileUserScore} - {opponentScore})
                         </p>
                         <p className="text-xs text-muted-foreground">
-                           {match.createdAt?.toDate ? formatDistanceToNow(match.createdAt.toDate(), { addSuffix: true }) : 'A while ago'}
+                           {matchDate}
                         </p>
                       </div>
                       <div className="mt-2 sm:mt-0">
