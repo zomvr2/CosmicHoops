@@ -27,12 +27,16 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const mainNavItems: NavItem[] = [
+const allNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/start-match", label: "Start Match", icon: Swords },
   { href: "/friends", label: "Friends", icon: Users },
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
+
+const startMatchItem = allNavItems.find(item => item.label === "Start Match")!;
+const mainNavItems = allNavItems.filter(item => item.label !== "Start Match");
+
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -44,9 +48,33 @@ export function SidebarNav() {
     router.push("/");
   };
 
+  const renderNavItem = (item: NavItem, isStartMatchSpecial: boolean = false) => {
+    const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/start-match" && pathname.startsWith(item.href));
+    const isActuallyStartMatch = item.label === "Start Match";
+
+    return (
+      <Link key={item.href} href={item.href} legacyBehavior>
+        <a
+          className={cn(
+            "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 ease-in-out",
+            isActive
+              ? "bg-primary/20 text-primary font-semibold shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
+              : isActuallyStartMatch 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 glow-primary" 
+                : "text-foreground/70 hover:bg-muted hover:text-foreground",
+            isActuallyStartMatch && isActive && "ring-2 ring-offset-background ring-offset-1 ring-primary-foreground/50" // Special active state for start match
+          )}
+        >
+          <item.icon className={cn("h-5 w-5", isActive && !isActuallyStartMatch ? "text-primary" : isActuallyStartMatch ? "text-primary-foreground" : "")} />
+          <span className={cn(isActuallyStartMatch ? "text-primary-foreground" : "")}>{item.label}</span>
+        </a>
+      </Link>
+    );
+  }
+
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-card border-r border-border fixed top-0 left-0 h-full z-40 p-4 space-y-6">
-      <div className="px-2 pt-2">
+    <aside className="hidden md:flex flex-col w-64 bg-card border-r border-border fixed top-0 left-0 h-full z-40 p-4">
+      <div className="px-2 pt-2 mb-6"> {/* Added mb-6 for spacing */}
         <Link href="/dashboard">
           <Logo size="small" />
         </Link>
@@ -54,32 +82,11 @@ export function SidebarNav() {
       
       <nav className="flex-grow space-y-2">
         <p className="px-4 text-xs text-muted-foreground uppercase tracking-wider">Main</p>
-        {mainNavItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-          const isStartMatch = item.label === "Start Match";
-
-          return (
-            <Link key={item.href} href={item.href} legacyBehavior>
-              <a
-                className={cn(
-                  "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 ease-in-out",
-                  isActive
-                    ? "bg-primary/20 text-primary font-semibold shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
-                    : isStartMatch 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 glow-primary" 
-                      : "text-foreground/70 hover:bg-muted hover:text-foreground",
-                  isStartMatch && isActive && "ring-2 ring-offset-background ring-offset-1 ring-primary-foreground/50" // Special active state for start match
-                )}
-              >
-                <item.icon className={cn("h-5 w-5", isActive && !isStartMatch ? "text-primary" : isStartMatch ? "text-primary-foreground" : "")} />
-                <span className={cn(isStartMatch ? "text-primary-foreground" : "")}>{item.label}</span>
-              </a>
-            </Link>
-          );
-        })}
+        {mainNavItems.map((item) => renderNavItem(item))}
       </nav>
 
       <div className="mt-auto space-y-2">
+        {startMatchItem && renderNavItem(startMatchItem, true)}
         {user && (
           <div className="px-1 py-2 border-t border-border text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
             <Link href="/profile/me" className="flex items-center space-x-3 flex-grow overflow-hidden cursor-pointer pl-1 py-1">
