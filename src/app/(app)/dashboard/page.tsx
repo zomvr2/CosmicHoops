@@ -9,7 +9,7 @@ import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, Timesta
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart, Swords, Users, Sparkles, Loader2 } from "lucide-react"; // Changed Star to Sparkles
+import { BarChart, Swords, Users, Sparkles, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -49,7 +49,7 @@ export default function DashboardPage() {
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
-          setAuraPoints(userDocSnap.data().aura || 0);
+          setAuraPoints(userDocSnap.data().aura); // Can be negative
         } else {
           setAuraPoints(0); // Default to 0 if no profile found
           console.warn("User profile not found for aura, defaulting to 0.");
@@ -117,6 +117,9 @@ export default function DashboardPage() {
 
   if (!user) return null; 
 
+  const auraDisplayColor = auraPoints !== null && auraPoints < 0 ? 'text-red-400' : 'text-accent';
+  const auraIconColor = auraPoints !== null && auraPoints < 0 ? 'text-red-400' : 'text-glow-accent';
+
   return (
     <div className="space-y-8">
       <Card className="bg-card/70 backdrop-blur-md shadow-xl glow-primary">
@@ -126,12 +129,12 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center text-2xl font-bold text-accent">
-              <Sparkles className="w-7 h-7 mr-2 text-glow-accent" /> {/* Changed Star to Sparkles */}
+            <div className={`flex items-center text-2xl font-bold`}>
+              <Sparkles className={`w-7 h-7 mr-2 ${auraIconColor}`} />
               {isLoadingAura ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
-                <span>{auraPoints ?? 0} Aura</span>
+                <span className={auraDisplayColor}>{auraPoints ?? 0} Aura</span>
               )}
             </div>
             <p className="text-muted-foreground">Your current cosmic energy level. Keep winning to increase it!</p>

@@ -17,9 +17,10 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"; // Added TooltipProvider
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
+const DEFAULT_BANNER_URL = "https://placehold.co/1200x300/FFFFFF/FFFFFF.png"; // Plain white
 
 interface UserProfileData {
   uid: string;
@@ -263,15 +264,18 @@ export default function UserProfilePage() {
   }
 
   const isOwnProfile = currentUser?.uid === profileData.uid;
+  const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-accent';
+  const auraIconColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
+
 
   return (
-    <TooltipProvider> {/* Ensure TooltipProvider wraps content using Tooltip */}
+    <TooltipProvider>
     <div className="space-y-8">
       <Card className="bg-card/70 backdrop-blur-md shadow-2xl overflow-hidden">
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
            <Image 
-             src={profileData.bannerUrl || "https://placehold.co/1200x300.png"} 
-             data-ai-hint="galaxy nebula" 
+             src={profileData.bannerUrl || DEFAULT_BANNER_URL} 
+             data-ai-hint="white background" 
              alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
              layout="fill" 
              objectFit="cover" 
@@ -347,7 +351,7 @@ export default function UserProfilePage() {
                   placeholder="https://example.com/banner.png"
                   className="bg-background/50 mt-1"
                 />
-                 <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner.</p>
+                 <p className="text-xs text-muted-foreground mt-1">Enter a URL for your profile banner. Defaults to a plain white banner.</p>
               </div>
               <div>
                 <Label htmlFor="newDescription" className="text-foreground/80">Profile Description</Label>
@@ -373,9 +377,9 @@ export default function UserProfilePage() {
           ) : (
             <>
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center text-2xl font-bold text-accent">
-                  <Sparkles className="w-8 h-8 mr-2 text-glow-accent" />
-                  <span>{profileData.aura} Aura</span>
+                <div className="flex items-center text-2xl font-bold">
+                  <Sparkles className={`w-8 h-8 mr-2 ${auraIconColor}`} />
+                  <span className={auraDisplayColor}>{profileData.aura} Aura</span>
                 </div>
                 {isOwnProfile && (
                   <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10 self-start md:self-center">
@@ -500,3 +504,4 @@ export default function UserProfilePage() {
     </TooltipProvider>
   );
 }
+
