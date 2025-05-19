@@ -270,7 +270,7 @@ export default function FriendsPage() {
           <TabsTrigger value="add-friend">Add Friend</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="my-friends" className="mt-4">
+        <TabsContent value="my-friends" className="mt-8">
           <Card className="bg-card/50">
             <CardHeader><CardTitle>Your Squad</CardTitle></CardHeader>
             <CardContent>
@@ -279,7 +279,7 @@ export default function FriendsPage() {
               ) : (
                 <ul className="space-y-3">
                   {friends.map(friend => (
-                    <li key={friend.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <li key={friend.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                       <div className="flex items-center space-x-3">
                         <Avatar>
                           <AvatarImage src={friend.avatarUrl || DEFAULT_AVATAR_URL} alt={friend.displayName} />
@@ -298,7 +298,7 @@ export default function FriendsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="requests" className="mt-4">
+        <TabsContent value="requests" className="mt-8">
           <Card className="bg-card/50">
             <CardHeader><CardTitle>Pending Invites</CardTitle></CardHeader>
             <CardContent>
@@ -307,7 +307,7 @@ export default function FriendsPage() {
               ) : (
                 <ul className="space-y-3">
                   {friendRequests.map(req => (
-                    <li key={req.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <li key={req.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                       <div className="flex items-center space-x-3">
                          <Avatar>
                            {/* Assuming the sender (fromUserId) might not have an avatarUrl in req directly */}
@@ -332,7 +332,7 @@ export default function FriendsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="add-friend" className="mt-4">
+        <TabsContent value="add-friend" className="mt-8">
           <Card className="bg-card/50">
             <CardHeader><CardTitle>Find New Hoopers</CardTitle><CardDescription>Search for users by their username.</CardDescription></CardHeader>
             <CardContent>
@@ -354,7 +354,7 @@ export default function FriendsPage() {
                   {searchResults.map(foundUser => {
                     const requestStatus = getRequestStatusForUser(foundUser.uid);
                     return (
-                      <li key={foundUser.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <li key={foundUser.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                         <div className="flex items-center space-x-3">
                            <Avatar>
                              <AvatarImage src={foundUser.avatarUrl || DEFAULT_AVATAR_URL} alt={foundUser.displayName} />
