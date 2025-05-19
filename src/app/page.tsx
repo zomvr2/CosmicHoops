@@ -5,6 +5,7 @@ import { Logo } from '@/components/common/logo';
 import Image from 'next/image';
 import { ChevronRight, Swords, Sparkles, MessageSquareText, Users, CheckCircle, Rocket, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from "@/lib/utils";
 
 interface FeatureCardProps {
   icon: React.ElementType;
@@ -37,16 +38,12 @@ export default function HomePage() {
           <Logo size="small" className="text-2xl" />
         </Link>
         <nav className="ml-auto flex items-center gap-4 sm:gap-6">
-          {/* Placeholder Links - update hrefs as needed */}
           <Link className="text-sm font-medium hover:text-primary transition-colors" href="#features" prefetch={false}>
             Features
           </Link>
           <Link className="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works" prefetch={false}>
             How It Works
           </Link>
-          {/* <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex border-accent text-accent hover:bg-accent/10 hover:text-accent">
-            <Link href="/auth">View Demo</Link>
-          </Button> */}
           <Button size="sm" asChild className="glow-primary hover:opacity-90 transition-opacity">
             <Link href="/auth?mode=signup">Sign In / Sign Up</Link>
           </Button>
@@ -62,7 +59,7 @@ export default function HomePage() {
             <div className="h-56 bg-gradient-to-br from-primary to-purple-400 blur-[106px] dark:from-blue-700 dark:to-purple-400"></div>
             <div className="h-32 bg-gradient-to-r from-cyan-400 to-sky-300 blur-[106px] dark:from-indigo-700 dark:to-sky-500"></div>
           </div>
-          <div className="container px-4 md:px-6 relative z-10">
+          <div className="container mx-auto px-4 md:px-6 relative z-10">
             <div className="text-center mb-6">
               <Link href="/auth?mode=signup" className="inline-block rounded-lg bg-muted/50 px-3 py-1 text-sm border border-border hover:border-primary/50 transition-colors" prefetch={false}>
                 <span className="flex items-center gap-1">
@@ -92,16 +89,13 @@ export default function HomePage() {
               <Button size="lg" asChild className="glow-primary hover:opacity-90 transition-opacity">
                 <Link href="/auth?mode=signup">Get Started for Free</Link>
               </Button>
-              {/* <Button variant="outline" size="lg" asChild className="border-accent text-accent hover:bg-accent/20 hover:text-accent transition-colors">
-                <Link href="/auth">View Demo</Link>
-              </Button> */}
             </div>
           </div>
         </section>
 
         {/* Features Section */}
         <section id="features" className="w-full py-16 md:py-24 lg:py-32 bg-background/50 border-t border-b border-border/40">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-12 md:mb-16">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-glow-accent">Features That Launch You Into Orbit</h2>
               <p className="mt-4 max-w-2xl mx-auto text-muted-foreground md:text-lg">
@@ -135,7 +129,7 @@ export default function HomePage() {
 
         {/* How It Works Section */}
         <section id="how-it-works" className="w-full py-16 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-12 md:mb-16">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-glow-accent">Ready for Liftoff?</h2>
               <p className="mt-4 max-w-2xl mx-auto text-muted-foreground md:text-lg">
@@ -194,9 +188,4 @@ export default function HomePage() {
       </footer>
     </div>
   );
-}
-
-// Helper cn function if not globally available (it is in lib/utils)
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return inputs.filter(Boolean).join(' ');
 }
