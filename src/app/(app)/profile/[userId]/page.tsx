@@ -307,6 +307,8 @@ export default function UserProfilePage() {
   const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || '') : (profileData.bannerUrl || '');
   const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-accent';
   const auraIconColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
+  const mainDisplayName = profileData.fullName || profileData.displayName;
+
 
   return (
     <TooltipProvider>
@@ -327,7 +329,7 @@ export default function UserProfilePage() {
              <Button 
               variant="outline" 
               onClick={handleToggleEdit} 
-              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 rounded-lg text-xs"
+              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 sm:p-2 rounded-lg text-xs"
             >
               <Edit3 className="h-4 w-4 sm:mr-0 md:mr-2" />
               <span className="hidden md:inline">Edit Profile</span>
@@ -336,8 +338,8 @@ export default function UserProfilePage() {
         </div>
         
         {/* Avatar Section - Overlaps Banner */}
-        <div className="px-4 md:px-6">
-          <div className="relative -mt-12 md:-mt-16 h-24 w-24 md:h-32 md:w-32">
+        <div className="relative px-4 md:px-6 -mt-12 md:-mt-16">
+          <div className="relative h-24 w-24 md:h-32 md:w-32">
             {isEditing && isOwnProfile ? (
               <div className="h-full w-full rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
                 <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
@@ -353,9 +355,9 @@ export default function UserProfilePage() {
 
         {/* User Info - Name, @username, Badges, Aura */}
         <div className="px-4 md:px-6 mt-4">
-          <h1 className="text-2xl md:text-3xl font-bold">{profileData.fullName || `@${profileData.displayName}`}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{mainDisplayName}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
-            {profileData.fullName && <p>@{profileData.displayName}</p>}
+            <p>@{profileData.displayName}</p>
             {profileData.isCertifiedHooper && (
               <Tooltip>
                 <TooltipTrigger>
@@ -508,3 +510,5 @@ export default function UserProfilePage() {
     </TooltipProvider>
   );
 }
+
+    
