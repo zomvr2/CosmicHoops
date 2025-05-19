@@ -55,7 +55,9 @@ export function SidebarNav() {
       <nav className="flex-grow space-y-2">
         <p className="px-4 text-xs text-muted-foreground uppercase tracking-wider">Main</p>
         {mainNavItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isStartMatch = item.label === "Start Match";
+
           return (
             <Link key={item.href} href={item.href} legacyBehavior>
               <a
@@ -63,11 +65,14 @@ export function SidebarNav() {
                   "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 ease-in-out",
                   isActive
                     ? "bg-primary/20 text-primary font-semibold shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
-                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                    : isStartMatch 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 glow-primary" 
+                      : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                  isStartMatch && isActive && "ring-2 ring-offset-background ring-offset-1 ring-primary-foreground/50" // Special active state for start match
                 )}
               >
-                <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
-                <span>{item.label}</span>
+                <item.icon className={cn("h-5 w-5", isActive && !isStartMatch ? "text-primary" : isStartMatch ? "text-primary-foreground" : "")} />
+                <span className={cn(isStartMatch ? "text-primary-foreground" : "")}>{item.label}</span>
               </a>
             </Link>
           );
