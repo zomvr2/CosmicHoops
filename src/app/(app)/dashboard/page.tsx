@@ -209,11 +209,11 @@ export default function DashboardPage() {
           <CardDescription>Complete challenges for bonus Aura and bragging rights!</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Placeholder for Weekly Missions */}
-          <div className="flex items-center justify-center p-6 bg-muted/30 rounded-lg">
-            <Image src="https://placehold.co/300x150.png" data-ai-hint="space mission badge" alt="Weekly Mission Banner" width={300} height={150} className="rounded-md opacity-70"/>
+          <div className="flex items-center justify-center p-6 bg-muted/30 rounded-lg min-h-[100px]">
+            {/* Placeholder for Weekly Missions content or "No missions" text */}
+            {/* For now, we'll assume no missions are loaded */}
+            <p className="text-muted-foreground">No missions available at the moment. Check back later!</p>
           </div>
-          <p className="mt-4 text-center text-muted-foreground">New missions arriving soon from Galactic Command!</p>
         </CardContent>
       </Card>
 
