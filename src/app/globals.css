@@ -17,7 +17,7 @@ body {
     --popover: 220 30% 6%; /* Darker for popovers */
     --popover-foreground: 210 40% 98%;
 
-    --primary: 160 70% 45%; /* Vibrant Green/Teal */
+    --primary: 260 70% 60%; /* Smooth Purple */
     --primary-foreground: 210 40% 98%; /* White/Light text on primary */
 
     --secondary: 220 20% 15%; /* Dark muted blue */
@@ -26,7 +26,7 @@ body {
     --muted: 220 20% 12%; /* Darker muted */
     --muted-foreground: 210 20% 65%; /* Dimmer light gray */
 
-    --accent: 170 70% 50%; /* A slightly different vibrant teal/cyan */
+    --accent: 280 70% 65%; /* Complementary Purple/Pink */
     --accent-foreground: 210 40% 98%; /* White/Light text on accent */
 
     --destructive: 0 63% 50%; /* Red for destructive actions */
@@ -34,25 +34,25 @@ body {
 
     --border: 220 20% 15%; /* Dark border */
     --input: 220 20% 15%; /* Dark input background */
-    --ring: 160 70% 45%; /* Primary color for rings */
+    --ring: 260 70% 60%; /* Primary color for rings (Purple) */
 
     --radius: 0.5rem;
 
-    --chart-1: 160 70% 45%;
-    --chart-2: 170 70% 50%;
-    --chart-3: 160 50% 60%;
-    --chart-4: 170 50% 65%;
-    --chart-5: 220 30% 50%;
+    --chart-1: 260 70% 60%; /* Primary Purple */
+    --chart-2: 280 70% 65%; /* Accent Purple */
+    --chart-3: 260 50% 70%; /* Lighter Primary Purple */
+    --chart-4: 280 50% 75%; /* Lighter Accent Purple */
+    --chart-5: 220 10% 60%; /* Cool Gray */
 
     /* Sidebar variables adapted for the OLED theme */
     --sidebar-background: 220 35% 7%; /* Very dark for sidebar */
     --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 160 70% 45%; /* Primary green for sidebar items */
+    --sidebar-primary: 260 70% 60%; /* Primary purple for sidebar items */
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 220 25% 12%; /* Darker accent for sidebar */
     --sidebar-accent-foreground: 210 40% 90%;
     --sidebar-border: 220 20% 10%;
-    --sidebar-ring: 160 70% 45%;
+    --sidebar-ring: 260 70% 60%; /* Primary purple for sidebar rings */
   }
 
   html {
@@ -62,32 +62,32 @@ body {
     --card-foreground: 210 40% 98%;
     --popover: 220 30% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 160 70% 45%;
+    --primary: 260 70% 60%;
     --primary-foreground: 210 40% 98%;
     --secondary: 220 20% 15%;
     --secondary-foreground: 210 40% 90%;
     --muted: 220 20% 12%;
     --muted-foreground: 210 20% 65%;
-    --accent: 170 70% 50%;
+    --accent: 280 70% 65%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 50%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 20% 15%;
     --input: 220 20% 15%;
-    --ring: 160 70% 45%;
-    --chart-1: 160 70% 45%;
-    --chart-2: 170 70% 50%;
-    --chart-3: 160 50% 60%;
-    --chart-4: 170 50% 65%;
-    --chart-5: 220 30% 50%;
+    --ring: 260 70% 60%;
+    --chart-1: 260 70% 60%;
+    --chart-2: 280 70% 65%;
+    --chart-3: 260 50% 70%;
+    --chart-4: 280 50% 75%;
+    --chart-5: 220 10% 60%;
     --sidebar-background: 220 35% 7%;
     --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 160 70% 45%;
+    --sidebar-primary: 260 70% 60%;
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 220 25% 12%;
     --sidebar-accent-foreground: 210 40% 90%;
     --sidebar-border: 220 20% 10%;
-    --sidebar-ring: 160 70% 45%;
+    --sidebar-ring: 260 70% 60%;
   }
 }
 

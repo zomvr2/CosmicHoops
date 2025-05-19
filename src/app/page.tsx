@@ -44,9 +44,9 @@ export default function HomePage() {
           <Link className="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works" prefetch={false}>
             How It Works
           </Link>
-          <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex border-accent text-accent hover:bg-accent/10 hover:text-accent">
+          {/* <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex border-accent text-accent hover:bg-accent/10 hover:text-accent">
             <Link href="/auth">View Demo</Link>
-          </Button>
+          </Button> */}
           <Button size="sm" asChild className="glow-primary hover:opacity-90 transition-opacity">
             <Link href="/auth?mode=signup">Sign In / Sign Up</Link>
           </Button>
@@ -63,10 +63,12 @@ export default function HomePage() {
             <div className="h-32 bg-gradient-to-r from-cyan-400 to-sky-300 blur-[106px] dark:from-indigo-700 dark:to-sky-500"></div>
           </div>
           <div className="container px-4 md:px-6 relative z-10">
-            <div className="inline-block rounded-lg bg-muted/50 px-3 py-1 text-sm mb-6 border border-border hover:border-primary/50 transition-colors">
-              <Link href="/auth?mode=signup" className="flex items-center gap-1" prefetch={false}>
-                <span>Track Your 1v1 Basketball Battles</span>
-                <ChevronRight className="h-4 w-4 text-primary" />
+            <div className="text-center mb-6">
+              <Link href="/auth?mode=signup" className="inline-block rounded-lg bg-muted/50 px-3 py-1 text-sm border border-border hover:border-primary/50 transition-colors" prefetch={false}>
+                <span className="flex items-center gap-1">
+                  <span>Track Your 1v1 Basketball Battles</span>
+                  <ChevronRight className="h-4 w-4 text-primary" />
+                </span>
               </Link>
             </div>
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none text-glow-primary leading-tight">
@@ -90,9 +92,9 @@ export default function HomePage() {
               <Button size="lg" asChild className="glow-primary hover:opacity-90 transition-opacity">
                 <Link href="/auth?mode=signup">Get Started for Free</Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="border-accent text-accent hover:bg-accent/20 hover:text-accent transition-colors">
+              {/* <Button variant="outline" size="lg" asChild className="border-accent text-accent hover:bg-accent/20 hover:text-accent transition-colors">
                 <Link href="/auth">View Demo</Link>
-              </Button>
+              </Button> */}
             </div>
           </div>
         </section>
