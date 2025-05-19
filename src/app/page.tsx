@@ -16,7 +16,7 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon: Icon, title, description, className }: FeatureCardProps) {
   return (
-    <Card className={cn("bg-card/60 backdrop-blur-sm border-primary/30 hover:border-primary/70 transition-all duration-300 transform hover:scale-105 glow-primary", className)}>
+    <Card className={cn("bg-card/60 backdrop-blur-sm border-border/30 hover:border-primary/50 transition-all duration-300", className)}>
       <CardHeader className="items-center pb-4">
         <div className="p-3 bg-primary/20 rounded-full mb-3">
           <Icon className="h-8 w-8 text-primary text-glow-primary" />
@@ -102,7 +102,7 @@ export default function HomePage() {
                 Everything you need to take your friendly rivalries to a cosmic scale.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <FeatureCard
                 icon={Swords}
                 title="Log Every Clash"
@@ -189,3 +189,6 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+    
