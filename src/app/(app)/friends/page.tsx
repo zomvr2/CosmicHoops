@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Users, CheckCircle, XCircle, Loader2, Search, Send } from 'lucide-react';
+import { UserPlus, Users, CheckCircle, XCircle, Loader2, Search, Send, Inbox } from 'lucide-react';
 import Link from 'next/link';
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
@@ -255,129 +255,132 @@ export default function FriendsPage() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-card/70 backdrop-blur-md">
+    <Tabs defaultValue="my-friends" className="w-full">
+      <Card className="bg-card/70 backdrop-blur-md mb-6">
         <CardHeader>
           <CardTitle className="text-3xl flex items-center"><Users className="mr-3 h-8 w-8 text-primary text-glow-primary" />Cosmic Connections</CardTitle>
           <CardDescription>Manage your allies and rivals across the galaxy.</CardDescription>
         </CardHeader>
+        <CardContent className="pt-2 pb-4 px-4 sm:px-6">
+          <TabsList className="flex flex-col sm:flex-row sm:justify-center gap-2 w-full bg-transparent p-0">
+            <TabsTrigger value="my-friends" className="w-full sm:w-auto justify-center px-4 py-2 text-base">
+              <Users className="mr-2 h-5 w-5" /> My Friends
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="w-full sm:w-auto justify-center px-4 py-2 text-base">
+              <Inbox className="mr-2 h-5 w-5" /> Friend Requests ({friendRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="add-friend" className="w-full sm:w-auto justify-center px-4 py-2 text-base">
+              <UserPlus className="mr-2 h-5 w-5" /> Add Friend
+            </TabsTrigger>
+          </TabsList>
+        </CardContent>
       </Card>
 
-      <Tabs defaultValue="my-friends" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 bg-muted/50 mb-4">
-          <TabsTrigger value="my-friends">My Friends</TabsTrigger>
-          <TabsTrigger value="requests">Friend Requests ({friendRequests.length})</TabsTrigger>
-          <TabsTrigger value="add-friend">Add Friend</TabsTrigger>
-        </TabsList>
+      <TabsContent value="my-friends" className="mt-0">
+        <Card className="bg-card/50">
+          <CardHeader><CardTitle>Your Squad</CardTitle></CardHeader>
+          <CardContent>
+            {isLoading.friends ? <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /> : friends.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No friends yet. Go make some cosmic connections!</p>
+            ) : (
+              <ul className="space-y-3">
+                {friends.map(friend => (
+                  <li key={friend.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
+                    <div className="flex items-center space-x-3">
+                      <Avatar>
+                        <AvatarImage src={friend.avatarUrl || DEFAULT_AVATAR_URL} alt={friend.displayName} />
+                        <AvatarFallback>{friend.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{friend.displayName}</span>
+                    </div>
+                     <Button variant="ghost" size="sm" asChild className="text-accent hover:text-primary">
+                       <Link href={`/profile/${friend.uid}`}>View Profile</Link>
+                     </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-        <TabsContent value="my-friends" className="mt-8">
-          <Card className="bg-card/50">
-            <CardHeader><CardTitle>Your Squad</CardTitle></CardHeader>
-            <CardContent>
-              {isLoading.friends ? <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /> : friends.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No friends yet. Go make some cosmic connections!</p>
-              ) : (
-                <ul className="space-y-3">
-                  {friends.map(friend => (
-                    <li key={friend.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={friend.avatarUrl || DEFAULT_AVATAR_URL} alt={friend.displayName} />
-                          <AvatarFallback>{friend.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{friend.displayName}</span>
-                      </div>
-                       <Button variant="ghost" size="sm" asChild className="text-accent hover:text-primary">
-                         <Link href={`/profile/${friend.uid}`}>View Profile</Link>
-                       </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+      <TabsContent value="requests" className="mt-0">
+        <Card className="bg-card/50">
+          <CardHeader><CardTitle>Pending Invites</CardTitle></CardHeader>
+          <CardContent>
+            {isLoading.requests ? <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /> : friendRequests.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No pending friend requests.</p>
+            ) : (
+              <ul className="space-y-3">
+                {friendRequests.map(req => (
+                  <li key={req.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
+                    <div className="flex items-center space-x-3">
+                       <Avatar>
+                         <AvatarFallback>{req.fromUserName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                       </Avatar>
+                      <span className="font-medium">{req.fromUserName} wants to connect!</span>
+                    </div>
+                    <div className="space-x-2">
+                      <Button size="sm" variant="ghost" className="text-green-400 hover:bg-green-400/10" onClick={() => handleFriendRequestResponse(req.id, 'accepted', req.fromUserId)} disabled={isLoading.action}>
+                        <CheckCircle className="mr-1 h-4 w-4"/> Accept
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-red-400 hover:bg-red-400/10" onClick={() => handleFriendRequestResponse(req.id, 'declined', req.fromUserId)} disabled={isLoading.action}>
+                        <XCircle className="mr-1 h-4 w-4"/> Decline
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-        <TabsContent value="requests" className="mt-8">
-          <Card className="bg-card/50">
-            <CardHeader><CardTitle>Pending Invites</CardTitle></CardHeader>
-            <CardContent>
-              {isLoading.requests ? <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /> : friendRequests.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No pending friend requests.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {friendRequests.map(req => (
-                    <li key={req.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
+      <TabsContent value="add-friend" className="mt-0">
+        <Card className="bg-card/50">
+          <CardHeader><CardTitle>Find New Hoopers</CardTitle><CardDescription>Search for users by their username.</CardDescription></CardHeader>
+          <CardContent>
+            <form onSubmit={handleSearchUser} className="flex space-x-2 mb-6">
+              <Input
+                type="text"
+                placeholder="Enter user's username"
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                className="bg-background/50"
+              />
+              <Button type="submit" disabled={isLoading.search || !searchUsername.trim()} className="glow-accent">
+                {isLoading.search ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+            </form>
+            {isLoading.search && <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />}
+            {searchResults.length > 0 && (
+              <ul className="space-y-3">
+                {searchResults.map(foundUser => {
+                  const requestStatus = getRequestStatusForUser(foundUser.uid);
+                  return (
+                    <li key={foundUser.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                       <div className="flex items-center space-x-3">
                          <Avatar>
-                           {/* Assuming the sender (fromUserId) might not have an avatarUrl in req directly */}
-                           {/* You might need to fetch sender's profile for avatar here if needed, or use fallback */}
-                           <AvatarFallback>{req.fromUserName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                           <AvatarImage src={foundUser.avatarUrl || DEFAULT_AVATAR_URL} alt={foundUser.displayName} />
+                           <AvatarFallback>{foundUser.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                          </Avatar>
-                        <span className="font-medium">{req.fromUserName} wants to connect!</span>
+                        <span className="font-medium">{foundUser.displayName}</span>
                       </div>
-                      <div className="space-x-2">
-                        <Button size="sm" variant="ghost" className="text-green-400 hover:bg-green-400/10" onClick={() => handleFriendRequestResponse(req.id, 'accepted', req.fromUserId)} disabled={isLoading.action}>
-                          <CheckCircle className="mr-1 h-4 w-4"/> Accept
+                      {requestStatus ? (
+                        <span className="text-sm text-muted-foreground">{requestStatus}</span>
+                      ) : (
+                        <Button size="sm" onClick={() => handleSendFriendRequest(foundUser.uid)} disabled={isLoading.action} className="text-sm">
+                          <UserPlus className="mr-1 h-4 w-4" /> Send Request
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-red-400 hover:bg-red-400/10" onClick={() => handleFriendRequestResponse(req.id, 'declined', req.fromUserId)} disabled={isLoading.action}>
-                          <XCircle className="mr-1 h-4 w-4"/> Decline
-                        </Button>
-                      </div>
+                      )}
                     </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="add-friend" className="mt-8">
-          <Card className="bg-card/50">
-            <CardHeader><CardTitle>Find New Hoopers</CardTitle><CardDescription>Search for users by their username.</CardDescription></CardHeader>
-            <CardContent>
-              <form onSubmit={handleSearchUser} className="flex space-x-2 mb-6">
-                <Input
-                  type="text"
-                  placeholder="Enter user's username"
-                  value={searchUsername}
-                  onChange={(e) => setSearchUsername(e.target.value)}
-                  className="bg-background/50"
-                />
-                <Button type="submit" disabled={isLoading.search || !searchUsername.trim()} className="glow-accent">
-                  {isLoading.search ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                </Button>
-              </form>
-              {isLoading.search && <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />}
-              {searchResults.length > 0 && (
-                <ul className="space-y-3">
-                  {searchResults.map(foundUser => {
-                    const requestStatus = getRequestStatusForUser(foundUser.uid);
-                    return (
-                      <li key={foundUser.uid} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
-                        <div className="flex items-center space-x-3">
-                           <Avatar>
-                             <AvatarImage src={foundUser.avatarUrl || DEFAULT_AVATAR_URL} alt={foundUser.displayName} />
-                             <AvatarFallback>{foundUser.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-                           </Avatar>
-                          <span className="font-medium">{foundUser.displayName}</span>
-                        </div>
-                        {requestStatus ? (
-                          <span className="text-sm text-muted-foreground">{requestStatus}</span>
-                        ) : (
-                          <Button size="sm" onClick={() => handleSendFriendRequest(foundUser.uid)} disabled={isLoading.action} className="text-sm">
-                            <UserPlus className="mr-1 h-4 w-4" /> Send Request
-                          </Button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
