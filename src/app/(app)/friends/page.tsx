@@ -84,10 +84,10 @@ export default function FriendsPage() {
         const incomingReqs = await Promise.all(incomingSnapshot.docs.map(async (d) => {
           const reqData = d.data();
           const senderDoc = await getDoc(doc(db, 'users', reqData.fromUserId));
-          return { 
-            id: d.id, 
-            ...reqData, 
-            fromUserName: senderDoc.exists() ? senderDoc.data().displayName : 'Unknown User' 
+          return {
+            id: d.id,
+            ...reqData,
+            fromUserName: senderDoc.exists() ? senderDoc.data().displayName : 'Unknown User'
           } as FriendRequest;
         }));
         setFriendRequests(incomingReqs);
@@ -138,7 +138,7 @@ export default function FriendsPage() {
       // Check if a request already exists (either way or already friends)
       const existingRequestQuery1 = query(collection(db, 'friendRequests'), where('fromUserId', '==', user.uid), where('toUserId', '==', targetUserId));
       const existingRequestQuery2 = query(collection(db, 'friendRequests'), where('fromUserId', '==', targetUserId), where('toUserId', '==', user.uid));
-      
+
       const [snap1, snap2] = await Promise.all([getDocs(existingRequestQuery1), getDocs(existingRequestQuery2)]);
 
       if (!snap1.empty || !snap2.empty) {
@@ -212,14 +212,14 @@ export default function FriendsPage() {
 
 
       await batch.commit();
-      
+
       // Send notification if accepted (or declined if implemented)
       if (newStatus === 'accepted' && fromUserId && notificationMessage) {
          await addDoc(collection(db, 'notifications'), {
            userId: fromUserId, // Notify the original sender
            type: notificationType,
            message: notificationMessage,
-           relatedId: user.uid, 
+           relatedId: user.uid,
            isRead: false,
            createdAt: serverTimestamp(),
            senderId: user.uid,
@@ -264,7 +264,7 @@ export default function FriendsPage() {
       </Card>
 
       <Tabs defaultValue="my-friends" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 bg-muted/50 mb-4">
           <TabsTrigger value="my-friends">My Friends</TabsTrigger>
           <TabsTrigger value="requests">Friend Requests ({friendRequests.length})</TabsTrigger>
           <TabsTrigger value="add-friend">Add Friend</TabsTrigger>
@@ -382,3 +382,5 @@ export default function FriendsPage() {
   );
 }
 
+
+    
