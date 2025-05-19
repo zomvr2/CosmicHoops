@@ -356,7 +356,7 @@ export default function UserProfilePage() {
         {/* User Info - Name, @username, Badges, Aura */}
         <div className="px-4 md:px-6 mt-4">
           <h1 className="text-2xl md:text-3xl font-bold">{mainDisplayName}</h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1 mb-3">
             <p>@{profileData.displayName}</p>
             {profileData.isCertifiedHooper && (
               <Tooltip>
