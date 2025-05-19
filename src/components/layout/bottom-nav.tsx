@@ -3,43 +3,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Swords, Users, Bell, UserCircle, LogOut } from "lucide-react";
+import { Home, Swords, Users, Bell, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import React from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  action?: () => void; // Optional action for items like logout
 }
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth(); 
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push("/");
-  };
+  const { user } = useAuth();
 
   const regularNavItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/friends", label: "Friends", icon: Users },
     { href: "/notifications", label: "Notifications", icon: Bell },
-    { href: "/profile/me", label: "Profile", icon: UserCircle }, 
+    { href: "/profile/me", label: "Profile", icon: UserCircle }, // Icon is placeholder, Avatar used instead
   ];
 
   const startMatchItem: NavItem = { href: "/start-match", label: "Start Match", icon: Swords };
@@ -49,50 +37,29 @@ export function BottomNav() {
       <ul className="flex justify-around items-center h-full px-1">
         {regularNavItems.map((item, index) => {
           const isActive =
-            (item.href === "/dashboard" && pathname === item.href) || // Exact match for dashboard
-            (item.href !== "/dashboard" && pathname.startsWith(item.href)); // StartsWith for others like /profile or /friends
+            (item.href === "/dashboard" && pathname === item.href) ||
+            (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
           let itemContent;
 
           if (item.label === "Profile") {
             itemContent = (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "group flex flex-col items-center justify-center p-2 rounded-md w-full h-full",
-                      "focus-visible:ring-0 focus-visible:ring-offset-0" // Minimal focus appearance
-                    )}
-                    aria-label={item.label}
-                  >
-                    <item.icon 
-                      className={cn(
-                        "h-6 w-6 mb-0.5 transition-colors",
-                        isActive ? "text-primary text-glow-primary" : "text-muted-foreground group-hover:text-foreground"
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs transition-colors",
-                        isActive ? "text-primary font-medium" : "text-muted-foreground group-hover:text-foreground"
-                      )}
-                    >
-                      {item.label}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="center" className="mb-2 w-40">
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/profile/me" className="w-full flex items-center">
-                      <UserCircle className="mr-2 h-4 w-4" /> View Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center">
-                    <LogOut className="mr-2 h-4 w-4" /> Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Link href={item.href} className="group flex flex-col items-center justify-center p-1 rounded-md w-full h-full">
+                <Avatar className="h-7 w-7 mb-0.5 transition-colors group-hover:opacity-80">
+                  <AvatarImage src={user?.photoURL || DEFAULT_AVATAR_URL} alt={user?.displayName || "User Avatar"} />
+                  <AvatarFallback className="text-xs">
+                    {user?.displayName ? user.displayName[0].toUpperCase() : "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span
+                  className={cn(
+                    "text-xs transition-colors",
+                    isActive ? "text-primary font-medium" : "text-muted-foreground group-hover:text-foreground"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
             );
           } else {
             // Standard rendering for other items
@@ -115,7 +82,7 @@ export function BottomNav() {
               </Link>
             );
           }
-          
+
           if (index === 1) { // After "Friends" to make space for central button
             return (
               <React.Fragment key={item.href + "_fragment"}>
