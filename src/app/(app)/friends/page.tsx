@@ -264,7 +264,7 @@ export default function FriendsPage() {
       </Card>
 
       <Tabs defaultValue="my-friends" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 bg-muted/50">
           <TabsTrigger value="my-friends">My Friends</TabsTrigger>
           <TabsTrigger value="requests">Friend Requests ({friendRequests.length})</TabsTrigger>
           <TabsTrigger value="add-friend">Add Friend</TabsTrigger>
@@ -381,3 +381,4 @@ export default function FriendsPage() {
     </div>
   );
 }
+
