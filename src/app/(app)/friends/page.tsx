@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Users, CheckCircle, XCircle, Loader2, Search, Send, Inbox } from 'lucide-react';
+import { UserPlus, Users, CheckCircle, XCircle, Loader2, Search, Send, Inbox, BadgeCheck, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // TooltipProvider is in root layout
 
 const DEFAULT_AVATAR_URL = "https://i.imgur.com/nkcoOPE.jpeg";
 
@@ -20,6 +21,8 @@ interface UserProfile {
   displayName: string;
   email?: string;
   avatarUrl?: string;
+  isCertifiedHooper?: boolean;
+  isCosmicMarshall?: boolean;
 }
 
 interface FriendRequest {
@@ -294,7 +297,29 @@ export default function FriendsPage() {
                         <AvatarImage src={friend.avatarUrl || DEFAULT_AVATAR_URL} alt={friend.displayName} />
                         <AvatarFallback>{friend.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{friend.displayName}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">{friend.displayName}</span>
+                        {friend.isCertifiedHooper && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <BadgeCheck className="h-4 w-4 text-blue-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Certified Hooper</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {friend.isCosmicMarshall && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <ShieldCheck className="h-4 w-4 text-orange-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cosmic Marshall</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                     </div>
                      <Button variant="ghost" size="sm" asChild className="text-accent hover:text-primary">
                        <Link href={`/profile/${friend.uid}`}>View Profile</Link>
@@ -319,6 +344,7 @@ export default function FriendsPage() {
                   <li key={req.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                     <div className="flex items-center space-x-3">
                        <Avatar>
+                         {/* Potentially fetch avatar for req.fromUserId if needed, or use fallback */}
                          <AvatarFallback>{req.fromUserName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                        </Avatar>
                       <span className="font-medium">{req.fromUserName} wants to connect!</span>
@@ -367,7 +393,29 @@ export default function FriendsPage() {
                            <AvatarImage src={foundUser.avatarUrl || DEFAULT_AVATAR_URL} alt={foundUser.displayName} />
                            <AvatarFallback>{foundUser.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                          </Avatar>
-                        <span className="font-medium">{foundUser.displayName}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium">{foundUser.displayName}</span>
+                          {foundUser.isCertifiedHooper && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <BadgeCheck className="h-4 w-4 text-blue-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Certified Hooper</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {foundUser.isCosmicMarshall && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <ShieldCheck className="h-4 w-4 text-orange-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Cosmic Marshall</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </div>
                       {requestStatus ? (
                         <span className="text-sm text-muted-foreground">{requestStatus}</span>
@@ -387,3 +435,6 @@ export default function FriendsPage() {
     </Tabs>
   );
 }
+
+
+    
