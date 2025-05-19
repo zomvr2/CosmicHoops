@@ -8,7 +8,7 @@ import { collection, query, where, orderBy, getDocs, doc, updateDoc, writeBatch,
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Loader2, CheckCircle, XCircle, MessageSquareText, Users, Swords } from 'lucide-react';
+import { Bell, Loader2, CheckCircle, XCircle, MessageSquareText, Users, Swords, CheckCheck } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
@@ -273,8 +273,8 @@ export default function NotificationsPage() {
 
                 </div>
                 {!notif.isRead && notif.type !== 'match_invite' && ( // Don't show mark as read for match_invite as it has specific actions
-                  <Button variant="ghost" size="icon" onClick={() => handleMarkAsRead(notif.id)} className="h-8 w-8">
-                    <XCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" title="Mark as read"/>
+                  <Button variant="ghost" size="icon" onClick={() => handleMarkAsRead(notif.id)} className="h-8 w-8" aria-label="Mark as read">
+                    <CheckCheck className="h-4 w-4 text-muted-foreground hover:text-foreground" title="Mark as read"/>
                   </Button>
                 )}
               </CardContent>
