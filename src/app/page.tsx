@@ -157,7 +157,7 @@ export default function HomePage() {
                   width={400}
                   height={400}
                   data-ai-hint="app screen basketball stats"
-                  className="rounded-xl shadow-2xl glow-primary opacity-80"
+                  className="rounded-xl opacity-80"
                 />
               </div>
             </div>

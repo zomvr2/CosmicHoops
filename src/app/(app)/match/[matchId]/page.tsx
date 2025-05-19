@@ -112,6 +112,7 @@ export default function MatchDetailsPage() {
             const loserSnap = await getDoc(loserUserRef);
             if (loserSnap.exists()) {
                 const currentAura = loserSnap.data().aura || 0;
+                 // Aura can be negative
                 batch.update(loserUserRef, { aura: currentAura + auraLoss });
             }
         }
@@ -186,7 +187,7 @@ export default function MatchDetailsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Card className="bg-card/70 backdrop-blur-md shadow-xl glow-primary overflow-hidden">
+      <Card className="bg-card/70 backdrop-blur-md overflow-hidden">
         <CardHeader className="bg-gradient-to-br from-primary/30 to-accent/30 p-6">
           <div className="flex items-center space-x-3 mb-2">
             <Swords className="h-10 w-10 text-primary text-glow-primary" />
@@ -256,7 +257,7 @@ export default function MatchDetailsPage() {
 
       {/* Dramatic Recap Section */}
       {matchDetails.status === 'confirmed' && matchDetails.recap && (
-        <Card className="bg-card/70 backdrop-blur-md shadow-xl glow-accent">
+        <Card className="bg-card/70 backdrop-blur-md">
           <CardHeader>
             <div className="flex items-center space-x-2 mb-1">
                 <MessageSquareText className="h-8 w-8 text-accent text-glow-accent" />

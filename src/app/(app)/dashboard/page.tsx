@@ -122,7 +122,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="bg-card/70 backdrop-blur-md shadow-xl glow-primary">
+      <Card className="bg-card/70 backdrop-blur-md">
         <CardHeader>
           <CardTitle className="text-3xl md:text-4xl text-glow-primary">Welcome, {user.displayName || "Champion"}!</CardTitle>
           <CardDescription>Your cosmic basketball journey continues here. Ready to dominate the galaxy?</CardDescription>

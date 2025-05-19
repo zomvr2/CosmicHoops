@@ -125,7 +125,7 @@ export default function StartMatchPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Card className="bg-card/70 backdrop-blur-md shadow-xl glow-accent">
+      <Card className="bg-card/70 backdrop-blur-md">
         <CardHeader>
           <div className="flex items-center space-x-2 mb-2">
             <Swords className="h-8 w-8 text-accent text-glow-accent" />

@@ -116,6 +116,7 @@ export default function NotificationsPage() {
             const loserRef = doc(db, 'users', loserId);
             const loserUserSnap = await getDoc(loserRef); 
             if (loserUserSnap.exists()) {
+                // Aura can be negative
                 batch.update(loserRef, { aura: (loserUserSnap.data().aura || 0) + auraLoss });
             }
         }
@@ -217,7 +218,7 @@ export default function NotificationsPage() {
       ) : (
         <div className="space-y-4">
           {notifications.map(notif => (
-            <Card key={notif.id} className={cn("bg-card/50 transition-all duration-300", !notif.isRead && "border-primary glow-primary")}>
+            <Card key={notif.id} className={cn("bg-card/50 transition-all duration-300", !notif.isRead && "border-primary")}>
               <CardContent className="pt-6 flex items-start space-x-4">
                 <div className="flex-shrink-0 mt-1">
                   {getIconForNotification(notif.type)}

@@ -141,7 +141,7 @@ export function AuthForm() {
   };
 
   return (
-    <Card className="w-full max-w-md bg-card/70 backdrop-blur-md shadow-2xl glow-primary">
+    <Card className="w-full max-w-md bg-card/70 backdrop-blur-md">
       <CardHeader>
         <CardTitle className="text-3xl text-glow-primary">
           {mode === "login" ? "Welcome Back, Star Voyager!" : "Join the Cosmic Court!"}

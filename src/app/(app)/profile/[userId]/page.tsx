@@ -271,7 +271,7 @@ export default function UserProfilePage() {
   return (
     <TooltipProvider>
     <div className="space-y-8">
-      <Card className="bg-card/70 backdrop-blur-md shadow-2xl overflow-hidden">
+      <Card className="bg-card/70 backdrop-blur-md overflow-hidden">
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
            <Image 
              src={profileData.bannerUrl || DEFAULT_BANNER_URL} 
@@ -469,7 +469,7 @@ export default function UserProfilePage() {
 
 
                 return (
-                  <li key={match.id} className="p-4 bg-muted/30 rounded-lg shadow-md hover:shadow-primary/30 transition-shadow">
+                  <li key={match.id} className="p-4 bg-muted/30 rounded-lg">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                       <div>
                         <p className="text-lg font-semibold">
