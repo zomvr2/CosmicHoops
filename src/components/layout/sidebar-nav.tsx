@@ -12,6 +12,7 @@ import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NavItem {
   href: string;
@@ -108,9 +109,15 @@ export function SidebarNav() {
           </TooltipContent>
         </Tooltip>
         {user && (
-          <div className="px-4 py-2 border-t border-border mt-2 text-sm text-muted-foreground">
-            <p className="font-semibold text-foreground">@{user.displayName || "User"}</p>
-            <p className="truncate">{user.email}</p>
+          <div className="px-2 py-2 border-t border-border mt-2 text-sm text-muted-foreground flex items-center space-x-3">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={user.photoURL || `https://placehold.co/40x40.png?text=${user.displayName?.[0] || 'U'}`} alt={user.displayName || 'User Avatar'} />
+              <AvatarFallback>{user.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="overflow-hidden">
+              <p className="font-semibold text-foreground truncate">@{user.displayName || "User"}</p>
+              <p className="truncate text-xs">{user.email}</p>
+            </div>
           </div>
         )}
       </div>
