@@ -191,11 +191,10 @@ export default function HomePage() {
               </div>
               <div className="flex justify-center items-center">
                 <Image
-                  src="https://placehold.co/400x400.png"
-                  alt="Cosmic Hoops App Screenshot Mockup"
+                  src="/ProfileScreenshot.png"
+                  alt="Cosmic Hoops Profile Page Screenshot"
                   width={400}
                   height={400}
-                  data-ai-hint="cosmic basketball"
                   className="rounded-xl opacity-80"
                 />
               </div>
@@ -223,4 +222,6 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
