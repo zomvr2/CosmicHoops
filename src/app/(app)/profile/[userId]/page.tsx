@@ -62,8 +62,6 @@ export default function UserProfilePage() {
   const { user: currentUser, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  const userIdFromParams = params.userId === 'me' ? currentUser?.uid : params.userId as string;
-
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,29 +75,30 @@ export default function UserProfilePage() {
 
   const [h2hStats, setH2hStats] = useState<H2HStats | null>(null);
   const [isLoadingH2H, setIsLoadingH2H] = useState(false);
-  const [userId, setUserId] = useState<string | undefined>(userIdFromParams);
+  
+  const rawPageUserIdParam = params?.userId as string | undefined;
 
   useEffect(() => {
-    if (params.userId === 'me' && currentUser) {
-      setUserId(currentUser.uid);
-    } else if (params.userId !== 'me') {
-      setUserId(params.userId as string);
-    }
-  }, [params.userId, currentUser]);
-
-
-  useEffect(() => {
-    if (!userId) {
-      if (!authLoading && params.userId === 'me' && !currentUser) {
-        router.push('/auth');
-      }
-      return;
-    }
-
     const fetchProfileData = async () => {
       setIsLoading(true);
+      
+      let targetUserId: string | undefined = undefined;
+      if (rawPageUserIdParam === 'me') {
+        targetUserId = currentUser?.uid;
+      } else {
+        targetUserId = rawPageUserIdParam;
+      }
+
+      if (!targetUserId) {
+        if (!authLoading && rawPageUserIdParam === 'me' && !currentUser) {
+          router.push('/auth');
+        }
+        setIsLoading(false); // Stop loading if no targetId and not pushing to auth
+        return;
+      }
+
       try {
-        const userDocRef = doc(db, 'users', userId);
+        const userDocRef = doc(db, 'users', targetUserId);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
@@ -115,8 +114,8 @@ export default function UserProfilePage() {
           return;
         }
 
-        const q1 = query(collection(db, 'matches'), where('player1Id', '==', userId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
-        const q2 = query(collection(db, 'matches'), where('player2Id', '==', userId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
+        const q1 = query(collection(db, 'matches'), where('player1Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
+        const q2 = query(collection(db, 'matches'), where('player2Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         
         const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
         
@@ -139,8 +138,10 @@ export default function UserProfilePage() {
       }
     };
 
-    fetchProfileData();
-  }, [userId, toast, router, authLoading, currentUser, params.userId]);
+    if (!authLoading) { // Only fetch if auth state is resolved
+        fetchProfileData();
+    }
+  }, [rawPageUserIdParam, currentUser, authLoading, toast, router]);
 
 
   useEffect(() => {
@@ -260,9 +261,15 @@ export default function UserProfilePage() {
   };
 
 
-  if (isLoading || authLoading || !userId) {
+  if (isLoading || authLoading || (!profileData && !authLoading && rawPageUserIdParam !== 'me')) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
+  if (!profileData && !authLoading && rawPageUserIdParam === 'me' && !currentUser) {
+     // This case might happen if authLoading finished but currentUser is still null (e.g. not logged in)
+     // The main useEffect already pushes to /auth, but this can be a fallback.
+     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  }
+
 
   if (!profileData) {
     return <div className="text-center py-10">User not found or an error occurred.</div>;
@@ -271,81 +278,92 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.uid === profileData.uid;
   const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-accent';
   const auraIconColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
-
+  const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || DEFAULT_BANNER_URL) : (profileData.bannerUrl || DEFAULT_BANNER_URL);
 
   return (
     <TooltipProvider>
-    <div className="space-y-0"> {/* Main container for the page */}
+    <div className="space-y-0">
       {/* Banner Section */}
       <div className="h-40 md:h-56 bg-gradient-to-br from-primary/30 via-purple-600/30 to-accent/30 relative">
-         <Image 
-           src={isEditing && isOwnProfile ? (newBannerUrl || DEFAULT_BANNER_URL) : (profileData.bannerUrl || DEFAULT_BANNER_URL)} 
-           data-ai-hint="abstract space" 
-           alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
-           layout="fill" 
-           objectFit="cover" 
-           priority={true}
-         />
+        {(isEditing && isOwnProfile ? newBannerUrl : profileData.bannerUrl) && (
+            <Image 
+              src={currentBannerUrl} 
+              alt={profileData.displayName ? `${profileData.displayName}'s banner` : "User banner"}
+              layout="fill" 
+              objectFit="cover" 
+              priority={true}
+            />
+        )}
       </div>
 
-      {/* Profile Header Content: Avatar, Edit Button */}
-      <div className="px-4 md:px-6">
-        <div className="flex justify-between items-end -mt-12 md:-mt-16 relative z-10">
-          {/* Avatar - shows placeholder if editing own profile */}
-          {isEditing && isOwnProfile ? (
-              <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-                  <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-              </div>
-          ) : (
-              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-                  <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
-                  <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-              </Avatar>
-          )}
-
-          {/* Edit Profile Button (Desktop & Tablet) */}
-          {isOwnProfile && !isEditing && (
+      {/* Actions Container - Edit/Logout buttons */}
+      {isOwnProfile && !isEditing && (
+        <div className="px-4 md:px-6 pt-3 flex justify-end items-center gap-2">
             <Button 
               variant="outline" 
               onClick={handleToggleEdit} 
-              className="hidden sm:inline-flex bg-background/80 hover:bg-background text-foreground border-border/50 shadow-sm mt-12 md:mt-16" /* Positive margin to align with bottom of banner */
+              className="bg-background/80 hover:bg-background text-foreground border-border/50 shadow-sm p-2 md:px-3 md:py-2"
             >
-              <Edit3 className="h-4 w-4 mr-0 sm:mr-2" />
-              <span className="hidden sm:inline">Edit Profile</span>
+              <Edit3 className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Edit Profile</span>
             </Button>
-          )}
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleLogout} 
+              className="md:hidden bg-background/80 hover:bg-background text-red-400 border-red-400/50 hover:border-red-400 shadow-sm p-2"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+        </div>
+      )}
+
+      {/* Profile Avatar & Initial Info Container */}
+      <div className="relative px-4 md:px-6 -mt-24 md:-mt-28">
+        {/* Avatar - shows placeholder if editing own profile */}
+        {isEditing && isOwnProfile ? (
+            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+                <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
+            </div>
+        ) : (
+            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+                <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+                <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+            </Avatar>
+        )}
+      </div>
+      
+      {/* Profile Info: Name, Badges, Aura */}
+      <div className="px-4 md:px-6 mt-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-bold">@{profileData.displayName}</h1>
+                {profileData.isCertifiedHooper && (
+                <Tooltip>
+                    <TooltipTrigger>
+                    <BadgeCheck className="h-5 w-5 md:h-6 md:h-6 text-blue-400" />
+                    </TooltipTrigger>
+                    <TooltipContent><p>Certified Hooper</p></TooltipContent>
+                </Tooltip>
+                )}
+                {profileData.isCosmicMarshall && (
+                <Tooltip>
+                    <TooltipTrigger>
+                    <ShieldCheck className="h-5 w-5 md:h-6 md:h-6 text-orange-400" />
+                    </TooltipTrigger>
+                    <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
+                </Tooltip>
+                )}
+            </div>
+            <div className={`flex items-center text-lg font-bold ${auraDisplayColor}`}>
+                <Sparkles className="w-5 h-5 mr-1.5" />
+                <span>{profileData.aura} Aura</span>
+            </div>
         </div>
       </div>
       
-      {/* Profile Info: Name, Badges, Description, Aura, Mobile Buttons OR Edit Form */}
-      <div className="px-4 md:px-6 mt-4 space-y-3"> {/* Consistent padding and spacing for content below avatar */}
-        {/* Name and Badges (Displayed only when not editing) */}
-        {!isEditing && (
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl md:text-2xl font-bold">{profileData.displayName}</h1>
-              {profileData.isCertifiedHooper && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <BadgeCheck className="h-5 w-5 md:h-6 md:h-6 text-blue-400" />
-                  </TooltipTrigger>
-                  <TooltipContent><p>Certified Hooper</p></TooltipContent>
-                </Tooltip>
-              )}
-               {profileData.isCosmicMarshall && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <ShieldCheck className="h-5 w-5 md:h-6 md:h-6 text-orange-400" />
-                  </TooltipTrigger>
-                  <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-            {/* You can add @username or other static info here if needed */}
-          </div>
-        )}
-        
-        {/* Profile Edit Form OR Description & Aura & Mobile Buttons */}
+      {/* Profile Edit Form OR Description & Mobile Buttons */}
+      <div className="px-4 md:px-6 mt-3 space-y-3">
         {isEditing && isOwnProfile ? (
           <form onSubmit={handleUpdateProfile} className="space-y-6 bg-card/70 backdrop-blur-md p-4 md:p-6 rounded-lg mt-2">
             <div>
@@ -381,52 +399,32 @@ export default function UserProfilePage() {
             {!profileData.description && ( 
                <p className="text-muted-foreground italic">No description provided yet.</p>
             )}
-
-            {/* Aura (only if not zero) */}
-            {profileData.aura !== 0 && (
-              <div className="flex items-center text-xl font-bold">
-                <Sparkles className={`w-6 h-6 mr-2 ${auraIconColor}`} />
-                <span className={auraDisplayColor}>{profileData.aura} Aura</span>
-              </div>
-            )}
-
-            {/* Mobile Edit/Logout Buttons */}
-            {isOwnProfile && (
-               <div className="sm:hidden flex gap-3 w-full pt-2">
-                  <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 bg-background/80 hover:bg-background text-foreground border-border/50 shadow-sm">
-                      <Edit3 className="mr-2 h-4 w-4" /> Edit
-                  </Button>
-                  <Button variant="outline" onClick={handleLogout} className="w-1/2 text-red-400 border-red-400 hover:bg-red-400/10 shadow-sm">
-                      <LogOut className="mr-2 h-4 w-4" /> Logout
-                  </Button>
-              </div>
-            )}
           </>
         )}
       </div>
       
-      <div className="px-4 md:px-6 mt-6"> {/* Add margin top before separator */}
-         <Separator className="my-6" /> {/* Separator for visual distinction */}
+      <div className="px-4 md:px-6 mt-6">
+         <Separator className="my-6" />
       </div>
 
       {/* H2H Stats and Match History Cards */}
-      <div className="px-4 md:px-6 space-y-8 pb-8"> {/* Consistent padding and spacing */}
+      <div className="px-4 md:px-6 space-y-8 pb-8">
         {!isOwnProfile && currentUser && (
           <Card className="bg-card/50">
-            <CardHeader><CardTitle className="text-2xl flex items-center"><BarChart3 className="mr-2 h-6 w-6 text-accent" />Head-to-Head with {profileData.displayName}</CardTitle><CardDescription>Your battle record against this cosmic warrior.</CardDescription></CardHeader>
+            <CardHeader><CardTitle className="text-2xl flex items-center"><BarChart3 className="mr-2 h-6 w-6 text-accent" />Head-to-Head with @{profileData.displayName}</CardTitle><CardDescription>Your battle record against this cosmic warrior.</CardDescription></CardHeader>
             <CardContent>
               {isLoadingH2H ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                 : h2hStats && h2hStats.totalPlayed > 0 ? (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center"><span className="text-muted-foreground">Total Matches:</span><span className="font-semibold">{h2hStats.totalPlayed}</span></div>
                   <div className="flex justify-between items-center"><span className="text-muted-foreground">Your Wins:</span><span className="font-semibold text-green-400">{h2hStats.currentUserWins}</span></div>
-                  <div className="flex justify-between items-center"><span className="text-muted-foreground">{profileData.displayName}'s Wins:</span><span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-muted-foreground">@{profileData.displayName}'s Wins:</span><span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span></div>
                   {h2hStats.totalPlayed > 0 && (
                     <div className="pt-2">
                       <Progress value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`} />
                        <div className="flex justify-between text-xs mt-1">
                          <span className="text-green-400">You ({h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
-                         <span className="text-red-400">{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                         <span className="text-red-400">@{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
                       </div>
                     </div>
                   )}
@@ -441,7 +439,7 @@ export default function UserProfilePage() {
         )}
 
         <Card className="bg-card/50">
-          <CardHeader><CardTitle className="text-2xl flex items-center" id="match-history"><Swords className="mr-2 h-6 w-6 text-accent" />Match History</CardTitle><CardDescription>Chronicles of past celestial clashes for {profileData.displayName}.</CardDescription></CardHeader>
+          <CardHeader><CardTitle className="text-2xl flex items-center" id="match-history"><Swords className="mr-2 h-6 w-6 text-accent" />Match History</CardTitle><CardDescription>Chronicles of past celestial clashes for @{profileData.displayName}.</CardDescription></CardHeader>
           <CardContent>
             {matchHistory.length === 0 ? (
               <p className="text-muted-foreground text-center py-6">No matches played yet. The arena awaits!</p>
@@ -459,7 +457,7 @@ export default function UserProfilePage() {
                     <li key={match.id} className="p-4 bg-muted/30 rounded-lg border border-border/30">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                         <div>
-                          <p className="text-lg font-semibold">vs <Link href={`/profile/${opponentId}`} className="text-accent hover:underline">{opponentName || "Unknown Player"}</Link></p>
+                          <p className="text-lg font-semibold">vs <Link href={`/profile/${opponentId}`} className="text-accent hover:underline">@{opponentName || "Unknown Player"}</Link></p>
                           <p className={`text-xl font-bold ${didProfileUserWin ? 'text-green-400' : 'text-red-400'}`}>{didProfileUserWin ? 'Victory' : 'Defeat'} ({profileUserScore} - {opponentScore})</p>
                           <p className="text-xs text-muted-foreground">{matchDate}</p>
                         </div>
@@ -482,6 +480,3 @@ export default function UserProfilePage() {
     </TooltipProvider>
   );
 }
-
-
-    
