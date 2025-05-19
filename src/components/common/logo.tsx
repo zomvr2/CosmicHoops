@@ -10,10 +10,10 @@ export function Logo({ className, size = 'medium', ...props }: LogoProps) {
     <div
       className={cn(
         'font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent',
-        {
-          'text-2xl': size === 'small',
-          'text-4xl': size === 'medium',
-          'text-6xl': size === 'large',
+        { // Adjusted sizes slightly for the new design
+          'text-xl': size === 'small', // Was 2xl
+          'text-3xl': size === 'medium', // Was 4xl
+          'text-5xl': size === 'large', // Was 6xl
         },
         className
       )}

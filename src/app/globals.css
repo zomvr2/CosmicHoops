@@ -8,88 +8,86 @@ body {
 
 @layer base {
   :root {
-    --background: 300 44% 14%; /* #241433 */
-    --foreground: 278 65% 90%; /* Light purple/white for readability */
+    --background: 220 40% 4%; /* Very dark blue/black */
+    --foreground: 210 40% 98%; /* Almost white */
 
-    --card: 278 30% 10%; /* Darker purple */
-    --card-foreground: 278 65% 90%;
+    --card: 220 30% 8%; /* Slightly lighter dark blue/black */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 278 30% 10%;
-    --popover-foreground: 278 65% 90%;
+    --popover: 220 30% 6%; /* Darker for popovers */
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 278 65% 61%; /* #9D4EDD */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 160 70% 45%; /* Vibrant Green/Teal */
+    --primary-foreground: 210 40% 98%; /* White/Light text on primary */
 
-    --secondary: 278 30% 20%; /* Slightly lighter purple */
-    --secondary-foreground: 278 65% 90%;
+    --secondary: 220 20% 15%; /* Dark muted blue */
+    --secondary-foreground: 210 40% 90%;
 
-    --muted: 278 30% 20%;
-    --muted-foreground: 278 30% 60%; /* Dimmer purple */
+    --muted: 220 20% 12%; /* Darker muted */
+    --muted-foreground: 210 20% 65%; /* Dimmer light gray */
 
-    --accent: 212 65% 59%; /* #5390D9 */
-    --accent-foreground: 0 0% 100%; /* White */
+    --accent: 170 70% 50%; /* A slightly different vibrant teal/cyan */
+    --accent-foreground: 210 40% 98%; /* White/Light text on accent */
 
-    --destructive: 0 72% 51%; /* Adjusted for dark theme */
+    --destructive: 0 63% 50%; /* Red for destructive actions */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 278 30% 25%;
-    --input: 278 30% 25%;
-    --ring: 212 65% 59%; /* Accent blue for focus rings */
+    --border: 220 20% 15%; /* Dark border */
+    --input: 220 20% 15%; /* Dark input background */
+    --ring: 160 70% 45%; /* Primary color for rings */
 
     --radius: 0.5rem;
 
-    --chart-1: 278 65% 61%;
-    --chart-2: 212 65% 59%;
-    --chart-3: 278 50% 70%;
-    --chart-4: 212 50% 70%;
-    --chart-5: 278 30% 50%;
+    --chart-1: 160 70% 45%;
+    --chart-2: 170 70% 50%;
+    --chart-3: 160 50% 60%;
+    --chart-4: 170 50% 65%;
+    --chart-5: 220 30% 50%;
 
-    /* Sidebar variables adapted for the dark theme */
-    --sidebar-background: 278 35% 12%; /* Slightly different dark purple for sidebar */
-    --sidebar-foreground: 278 60% 85%;
-    --sidebar-primary: 212 65% 59%; /* Accent blue for primary sidebar items */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 278 30% 18%;
-    --sidebar-accent-foreground: 278 65% 90%;
-    --sidebar-border: 278 30% 22%;
-    --sidebar-ring: 212 65% 59%;
+    /* Sidebar variables adapted for the OLED theme */
+    --sidebar-background: 220 35% 7%; /* Very dark for sidebar */
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 160 70% 45%; /* Primary green for sidebar items */
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 220 25% 12%; /* Darker accent for sidebar */
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 220 20% 10%;
+    --sidebar-ring: 160 70% 45%;
   }
 
-  /* Default to dark theme - remove .dark class if app is always dark */
-  /* Forcing dark theme without .dark class on html/body */
   html {
-    --background: 300 44% 14%;
-    --foreground: 278 65% 90%;
-    --card: 278 30% 10%;
-    --card-foreground: 278 65% 90%;
-    --popover: 278 30% 10%;
-    --popover-foreground: 278 65% 90%;
-    --primary: 278 65% 61%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 278 30% 20%;
-    --secondary-foreground: 278 65% 90%;
-    --muted: 278 30% 20%;
-    --muted-foreground: 278 30% 60%;
-    --accent: 212 65% 59%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
+    --background: 220 40% 4%;
+    --foreground: 210 40% 98%;
+    --card: 220 30% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 30% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 160 70% 45%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 220 20% 12%;
+    --muted-foreground: 210 20% 65%;
+    --accent: 170 70% 50%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 278 30% 25%;
-    --input: 278 30% 25%;
-    --ring: 212 65% 59%;
-    --chart-1: 278 65% 61%;
-    --chart-2: 212 65% 59%;
-    --chart-3: 278 50% 70%;
-    --chart-4: 212 50% 70%;
-    --chart-5: 278 30% 50%;
-    --sidebar-background: 278 35% 12%;
-    --sidebar-foreground: 278 60% 85%;
-    --sidebar-primary: 212 65% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 278 30% 18%;
-    --sidebar-accent-foreground: 278 65% 90%;
-    --sidebar-border: 278 30% 22%;
-    --sidebar-ring: 212 65% 59%;
+    --border: 220 20% 15%;
+    --input: 220 20% 15%;
+    --ring: 160 70% 45%;
+    --chart-1: 160 70% 45%;
+    --chart-2: 170 70% 50%;
+    --chart-3: 160 50% 60%;
+    --chart-4: 170 50% 65%;
+    --chart-5: 220 30% 50%;
+    --sidebar-background: 220 35% 7%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 160 70% 45%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 220 25% 12%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 220 20% 10%;
+    --sidebar-ring: 160 70% 45%;
   }
 }
 
@@ -106,15 +104,15 @@ body {
 /* Custom glowing effect utility */
 @layer utilities {
   .glow-primary {
-    @apply shadow-[0_0_15px_2px_hsl(var(--primary)/0.7)];
+    @apply shadow-[0_0_18px_3px_hsl(var(--primary)/0.6)];
   }
   .glow-accent {
-    @apply shadow-[0_0_15px_2px_hsl(var(--accent)/0.7)];
+    @apply shadow-[0_0_18px_3px_hsl(var(--accent)/0.6)];
   }
   .text-glow-primary {
-    @apply text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.9)];
+    @apply text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)];
   }
   .text-glow-accent {
-    @apply text-accent drop-shadow-[0_0_8px_hsl(var(--accent)/0.9)];
+    @apply text-accent drop-shadow-[0_0_10px_hsl(var(--accent)/0.8)];
   }
 }
