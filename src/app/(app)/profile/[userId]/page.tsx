@@ -1,19 +1,22 @@
 
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore';
+import { updateProfile as updateFirebaseProfile } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Star, Swords, Edit3, UserCircle, BarChart3 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, Star, Swords, Edit3, UserCircle, BarChart3, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
-import { Progress } from "@/components/ui/progress"; // Added Progress import
+import { Progress } from "@/components/ui/progress";
 
 interface UserProfileData {
   uid: string;
@@ -21,7 +24,7 @@ interface UserProfileData {
   email?: string;
   aura: number;
   avatarUrl?: string;
-  createdAt?: any; 
+  createdAt?: any;
 }
 
 interface MatchData {
@@ -55,14 +58,17 @@ export default function UserProfilePage() {
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false); // For future edit functionality
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [newAvatarUrl, setNewAvatarUrl] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const [h2hStats, setH2hStats] = useState<H2HStats | null>(null);
   const [isLoadingH2H, setIsLoadingH2H] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(userIdFromParams);
 
   useEffect(() => {
-    // Update userId state if currentUser loads and params.userId is 'me'
     if (params.userId === 'me' && currentUser) {
       setUserId(currentUser.uid);
     } else if (params.userId !== 'me') {
@@ -73,10 +79,8 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (!userId) {
-      if (!authLoading && params.userId === 'me' && !currentUser) { // If 'me' and no user after auth
+      if (!authLoading && params.userId === 'me' && !currentUser) {
         router.push('/auth');
-      } else if (!authLoading && params.userId !== 'me') { // If specific ID and no user ID yet, wait or handle
-         // Potentially could show loader here or rely on main isLoading
       }
       return;
     }
@@ -88,10 +92,13 @@ export default function UserProfilePage() {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          setProfileData({ uid: userDocSnap.id, ...userDocSnap.data() } as UserProfileData);
+          const data = userDocSnap.data() as UserProfileData;
+          setProfileData({ uid: userDocSnap.id, ...data });
+          setNewDisplayName(data.displayName || '');
+          setNewAvatarUrl(data.avatarUrl || '');
         } else {
           toast({ title: "Error", description: "User profile not found.", variant: "destructive" });
-          router.push('/dashboard'); 
+          router.push('/dashboard');
           return;
         }
 
@@ -102,7 +109,7 @@ export default function UserProfilePage() {
         
         const matches: MatchData[] = [];
         snap1.forEach(doc => matches.push({ id: doc.id, ...doc.data() } as MatchData));
-        snap2.forEach(doc => { 
+        snap2.forEach(doc => {
           if (!matches.find(m => m.id === doc.id)) {
             matches.push({ id: doc.id, ...doc.data()} as MatchData);
           }
@@ -123,63 +130,35 @@ export default function UserProfilePage() {
   }, [userId, toast, router, authLoading, currentUser, params.userId]);
 
 
-  // useEffect for Head-to-Head stats
   useEffect(() => {
     const fetchH2HStats = async () => {
       if (!profileData || !currentUser || profileData.uid === currentUser.uid) {
-        setH2hStats(null); // Not applicable or own profile
+        setH2hStats(null);
         return;
       }
-
       setIsLoadingH2H(true);
       try {
         const currentUserId = currentUser.uid;
         const viewedUserId = profileData.uid;
-
-        const q1 = query(
-          collection(db, 'matches'),
-          where('player1Id', '==', currentUserId),
-          where('player2Id', '==', viewedUserId),
-          where('status', '==', 'confirmed')
-        );
-        const q2 = query(
-          collection(db, 'matches'),
-          where('player1Id', '==', viewedUserId),
-          where('player2Id', '==', currentUserId),
-          where('status', '==', 'confirmed')
-        );
-
+        const q1 = query(collection(db, 'matches'), where('player1Id', '==', currentUserId), where('player2Id', '==', viewedUserId), where('status', '==', 'confirmed'));
+        const q2 = query(collection(db, 'matches'), where('player1Id', '==', viewedUserId), where('player2Id', '==', currentUserId), where('status', '==', 'confirmed'));
         const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        
         const h2hMatchesRaw: MatchData[] = [];
         snap1.forEach(doc => h2hMatchesRaw.push({ id: doc.id, ...doc.data() } as MatchData));
         snap2.forEach(doc => h2hMatchesRaw.push({ id: doc.id, ...doc.data() } as MatchData));
-        
-        // Deduplicate if any match somehow got fetched twice (shouldn't happen with these specific queries)
         const h2hMatchIds = new Set<string>();
         const h2hMatches = h2hMatchesRaw.filter(match => {
             if (h2hMatchIds.has(match.id)) return false;
             h2hMatchIds.add(match.id);
             return true;
         });
-
-
         let currentUserWins = 0;
         let viewedUserWins = 0;
         h2hMatches.forEach(match => {
-          if (match.winnerId === currentUserId) {
-            currentUserWins++;
-          } else if (match.winnerId === viewedUserId) {
-            viewedUserWins++;
-          }
+          if (match.winnerId === currentUserId) currentUserWins++;
+          else if (match.winnerId === viewedUserId) viewedUserWins++;
         });
-
-        setH2hStats({
-          currentUserWins,
-          viewedUserWins,
-          totalPlayed: h2hMatches.length,
-        });
-
+        setH2hStats({ currentUserWins, viewedUserWins, totalPlayed: h2hMatches.length });
       } catch (error) {
         console.error("Error fetching H2H stats:", error);
         toast({ title: "H2H Error", description: "Could not load head-to-head stats.", variant: "destructive" });
@@ -188,18 +167,79 @@ export default function UserProfilePage() {
         setIsLoadingH2H(false);
       }
     };
-
-    if (profileData && currentUser) { // Ensure data is available before fetching H2H
-        fetchH2HStats();
-    }
+    if (profileData && currentUser) fetchH2HStats();
   }, [profileData, currentUser, toast]);
 
-  if (isLoading || authLoading || !userId) { // Check !userId as well
+  const handleToggleEdit = () => {
+    if (profileData) {
+      setNewDisplayName(profileData.displayName || '');
+      setNewAvatarUrl(profileData.avatarUrl || '');
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleUpdateProfile = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !profileData) return;
+    if (!newDisplayName.trim()) {
+      toast({ title: "Validation Error", description: "Username cannot be empty.", variant: "destructive" });
+      return;
+    }
+
+    setIsUpdatingProfile(true);
+    try {
+      // Check for display name uniqueness if it has changed
+      if (newDisplayName.trim() !== profileData.displayName) {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("displayName", "==", newDisplayName.trim()));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          let nameTaken = false;
+          querySnapshot.forEach((doc) => {
+            if (doc.id !== currentUser.uid) {
+              nameTaken = true;
+            }
+          });
+          if (nameTaken) {
+            toast({ title: "Update Error", description: "Username already taken. Please choose another.", variant: "destructive" });
+            setIsUpdatingProfile(false);
+            return;
+          }
+        }
+      }
+
+      // Update Firebase Auth profile
+      await updateFirebaseProfile(auth.currentUser!, { // auth.currentUser should not be null here
+        displayName: newDisplayName.trim(),
+        photoURL: newAvatarUrl.trim() || null, // Use null if empty to potentially clear it
+      });
+
+      // Update Firestore document
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userDocRef, {
+        displayName: newDisplayName.trim(),
+        avatarUrl: newAvatarUrl.trim() || '', // Store empty string if cleared
+      });
+
+      // Update local state
+      setProfileData(prev => prev ? { ...prev, displayName: newDisplayName.trim(), avatarUrl: newAvatarUrl.trim() || '' } : null);
+      
+      toast({ title: "Success", description: "Profile updated successfully!" });
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast({ title: "Error", description: error.message || "Failed to update profile.", variant: "destructive" });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+
+  if (isLoading || authLoading || !userId) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
 
   if (!profileData) {
-    // This case should be handled by the redirect in fetchProfileData, but as a fallback:
     return <div className="text-center py-10">User not found or an error occurred.</div>;
   }
 
@@ -211,28 +251,75 @@ export default function UserProfilePage() {
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary via-purple-600 to-accent relative">
            <Image src="https://placehold.co/1200x300.png" data-ai-hint="galaxy nebula" alt="Galactic Background" layout="fill" objectFit="cover" className="opacity-50" />
            <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end space-x-4">
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-              <AvatarImage src={profileData.avatarUrl || `https://placehold.co/128x128.png?text=${profileData.displayName?.[0]}`} alt={profileData.displayName} />
-              <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-            </Avatar>
+            {!isEditing ? (
+              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+                <AvatarImage src={profileData.avatarUrl || `https://placehold.co/128x128.png?text=${profileData.displayName?.[0]}`} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+                <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                 Edit Mode
+              </div>
+            )}
             <div>
-              <CardTitle className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">{profileData.displayName}</CardTitle>
+              {!isEditing ? (
+                <CardTitle className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">{profileData.displayName}</CardTitle>
+              ) : (
+                <div className="pb-2"> {/* Placeholder for spacing if needed */} </div>
+              )}
               <CardDescription className="text-primary-foreground/80 drop-shadow-sm">Joined {profileData.createdAt?.toDate ? formatDistanceToNow(profileData.createdAt.toDate(), {addSuffix: true}) : 'the cosmos'}</CardDescription>
             </div>
            </div>
         </div>
         <CardContent className="pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center text-2xl font-bold text-accent">
-              <Star className="w-8 h-8 mr-2 text-glow-accent" />
-              <span>{profileData.aura || 0} Aura</span>
+          {isEditing && isOwnProfile ? (
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div>
+                <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
+                <Input
+                  id="newDisplayName"
+                  type="text"
+                  value={newDisplayName}
+                  onChange={(e) => setNewDisplayName(e.target.value)}
+                  placeholder="Your new cosmic alias"
+                  className="bg-background/50 mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newAvatarUrl" className="text-foreground/80">Avatar URL</Label>
+                <Input
+                  id="newAvatarUrl"
+                  type="url"
+                  value={newAvatarUrl}
+                  onChange={(e) => setNewAvatarUrl(e.target.value)}
+                  placeholder="https://example.com/avatar.png"
+                  className="bg-background/50 mt-1"
+                />
+                 <p className="text-xs text-muted-foreground mt-1">Enter a URL to an image for your avatar.</p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleToggleEdit} disabled={isUpdatingProfile}>
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+                <Button type="submit" disabled={isUpdatingProfile} className="glow-accent">
+                  {isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center text-2xl font-bold text-accent">
+                <Star className="w-8 h-8 mr-2 text-glow-accent" />
+                <span>{profileData.aura || 0} Aura</span>
+              </div>
+              {isOwnProfile && (
+                <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
+                  <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+                </Button>
+              )}
             </div>
-            {isOwnProfile && (
-              <Button variant="outline" onClick={() => setIsEditing(true)} disabled={isEditing} className="border-accent text-accent hover:bg-accent/10">
-                <Edit3 className="mr-2 h-4 w-4" /> Edit Profile {isEditing && "(Coming Soon)"}
-              </Button>
-            )}
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -263,9 +350,9 @@ export default function UserProfilePage() {
                 </div>
                 {h2hStats.totalPlayed > 0 && (
                   <div className="pt-2">
-                    <Progress 
-                      value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} 
-                      className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" // Custom gradient for progress
+                    <Progress
+                      value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0}
+                      className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary"
                       aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`}
                     />
                      <div className="flex justify-between text-xs mt-1">
@@ -277,7 +364,7 @@ export default function UserProfilePage() {
               </div>
             ) : h2hStats && h2hStats.totalPlayed === 0 ? (
               <p className="text-muted-foreground text-center py-4">No matches played against each other yet.</p>
-            ) : !isLoadingH2H ? ( 
+            ) : !isLoadingH2H ? (
               <p className="text-muted-foreground text-center py-4">Could not load head-to-head stats.</p>
             ) : null}
           </CardContent>
@@ -338,3 +425,4 @@ export default function UserProfilePage() {
   );
 }
 
+    
