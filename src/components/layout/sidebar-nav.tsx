@@ -48,7 +48,9 @@ export function SidebarNav() {
   };
 
   const renderNavItem = (item: NavItem, isStartMatchSpecial: boolean = false) => {
-    const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/start-match" && pathname.startsWith(item.href));
+    const isActive = 
+      (item.href === "/dashboard" && pathname === item.href) ||
+      (item.href !== "/dashboard" && pathname.startsWith(item.href));
     const isActuallyStartMatch = item.label === "Start Match";
 
     return (
@@ -56,12 +58,12 @@ export function SidebarNav() {
         <a
           className={cn(
             "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 ease-in-out",
-            isActive
+            isActive && !isActuallyStartMatch
               ? "bg-primary/20 text-primary font-semibold shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
               : isActuallyStartMatch 
                 ? "bg-primary text-primary-foreground hover:bg-primary/90 glow-primary" 
                 : "text-foreground/70 hover:bg-muted hover:text-foreground",
-            isActuallyStartMatch && isActive && "ring-2 ring-offset-background ring-offset-1 ring-primary-foreground/50" // Special active state for start match
+            isActuallyStartMatch && isActive && "ring-2 ring-offset-background ring-offset-1 ring-primary-foreground/50"
           )}
         >
           <item.icon className={cn("h-5 w-5", isActive && !isActuallyStartMatch ? "text-primary" : isActuallyStartMatch ? "text-primary-foreground" : "")} />
@@ -78,9 +80,17 @@ export function SidebarNav() {
           <Logo size="small" />
         </Link>
       </div>
+      
+      <nav className="flex-grow space-y-1.5 pt-2">
+        {mainNavItems.map((item) => renderNavItem(item))}
+      </nav>
 
-      {user && (
-        <div className="px-1 py-3 mb-2 text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
+      <Separator className="my-2" /> 
+
+      <div className="mt-auto space-y-2 pt-2">
+        {renderNavItem(startMatchItem, true)}
+        {user && (
+        <div className="px-1 py-2 mt-1 text-sm text-muted-foreground flex items-center justify-between hover:bg-muted/50 rounded-lg group transition-colors">
             <Link href="/profile/me" className="flex items-center space-x-3 flex-grow overflow-hidden cursor-pointer pl-1 py-1">
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={user.photoURL || DEFAULT_AVATAR_URL} alt={user.displayName || 'User Avatar'} />
@@ -102,7 +112,7 @@ export function SidebarNav() {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="bottom" align="end" className="w-48">
+              <DropdownMenuContent side="top" align="end" className="w-48 mb-1">
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
@@ -111,16 +121,8 @@ export function SidebarNav() {
             </DropdownMenu>
           </div>
         )}
-      
-      <Separator className="my-2" />
-      
-      <nav className="flex-grow space-y-1.5 pt-2">
-        {mainNavItems.map((item) => renderNavItem(item))}
-      </nav>
-
-      <div className="mt-auto space-y-2 pt-2">
-        {renderNavItem(startMatchItem, true)}
       </div>
     </aside>
   );
 }
+
