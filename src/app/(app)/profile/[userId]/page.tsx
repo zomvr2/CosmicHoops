@@ -83,8 +83,8 @@ export default function UserProfilePage() {
       setIsLoading(true);
       
       let targetUserId: string | undefined = undefined;
-      if (rawPageUserIdParam === 'me') {
-        targetUserId = currentUser?.uid;
+      if (rawPageUserIdParam === 'me' && currentUser) {
+        targetUserId = currentUser.uid;
       } else {
         targetUserId = rawPageUserIdParam;
       }
@@ -270,10 +270,9 @@ export default function UserProfilePage() {
   }
 
   const isOwnProfile = currentUser?.uid === profileData.uid;
+  const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || '') : (profileData.bannerUrl || '');
   const auraDisplayColor = profileData.aura < 0 ? 'text-red-400' : 'text-accent';
   const auraIconColor = profileData.aura < 0 ? 'text-red-400' : 'text-glow-accent';
-  const currentBannerUrl = isEditing && isOwnProfile ? (newBannerUrl || '') : (profileData.bannerUrl || '');
-
 
   return (
     <TooltipProvider>
@@ -289,75 +288,65 @@ export default function UserProfilePage() {
                 priority={true}
               />
           )}
-        </div>
-
-        {/* Profile Header Section: Avatar and Edit Button (Desktop) */}
-        <div className="px-4 md:px-6 flex justify-between items-end -mt-12 md:-mt-16 mb-4">
-          {isEditing && isOwnProfile ? (
-            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-              <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-            </div>
-          ) : (
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-              <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
-              <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
-            </Avatar>
-          )}
-
           {isOwnProfile && !isEditing && (
-            <Button 
+             <Button 
               variant="outline" 
               onClick={handleToggleEdit} 
-              className="rounded-full px-4 py-1.5 text-sm font-semibold hidden sm:flex" // Desktop Edit Button
+              className="absolute top-4 right-4 z-10 bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm"
             >
-              Edit Profile
+              <Edit3 className="h-4 w-4 sm:mr-0 md:mr-2" />
+              <span className="hidden md:inline">Edit Profile</span>
             </Button>
           )}
         </div>
-        
-        {/* User Info & Description Section OR Edit Form */}
+
+        {/* Avatar and User Info Section */}
         <div className="px-4 md:px-6">
-          {!isEditing || !isOwnProfile ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <h1 className="text-xl md:text-2xl font-bold">{profileData.displayName}</h1>
-                  {profileData.isCertifiedHooper && (
-                  <Tooltip>
-                      <TooltipTrigger>
-                      <BadgeCheck className="h-5 w-5 md:h-6 md:h-6 text-blue-400" />
-                      </TooltipTrigger>
-                      <TooltipContent><p>Certified Hooper</p></TooltipContent>
-                  </Tooltip>
-                  )}
-                  {profileData.isCosmicMarshall && (
-                  <Tooltip>
-                      <TooltipTrigger>
-                      <ShieldCheck className="h-5 w-5 md:h-6 md:h-6 text-orange-400" />
-                      </TooltipTrigger>
-                      <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
-                  </Tooltip>
-                  )}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <p className="text-muted-foreground">@{profileData.displayName}</p>
-                <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
-                  <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
-                  <span>{profileData.aura} Aura</span>
+          <div className="-mt-12 md:-mt-16 relative z-0"> {/* z-0 to allow avatar border to be under content card later if needed */}
+            {isEditing && isOwnProfile ? (
+                <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+                  <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
                 </div>
-              </div>
-              <p className="text-foreground/80 prose prose-invert max-w-none pt-1">{profileData.description || "No description provided yet."}</p>
-              
-              {/* Mobile Action Buttons: Edit & Logout */}
-              {isOwnProfile && !isEditing && (
-                <div className="flex sm:hidden gap-2 pt-3">
-                  <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 rounded-full">Edit Profile</Button>
-                  <Button variant="outline" onClick={handleLogout} className="w-1/2 rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">Logout</Button>
-                </div>
+              ) : (
+                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+                  <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} data-ai-hint="abstract avatar" alt={profileData.displayName} />
+                  <AvatarFallback className="text-4xl">{profileData.displayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
+                </Avatar>
               )}
+          </div>
+
+          <div className="mt-4">
+            <h1 className="text-2xl md:text-3xl font-bold">{profileData.displayName}</h1>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
+              <p>@{profileData.displayName}</p>
+              {profileData.isCertifiedHooper && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <BadgeCheck className="h-5 w-5 text-blue-400" />
+                  </TooltipTrigger>
+                  <TooltipContent><p>Certified Hooper</p></TooltipContent>
+                </Tooltip>
+              )}
+              {profileData.isCosmicMarshall && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ShieldCheck className="h-5 w-5 text-orange-400" />
+                  </TooltipTrigger>
+                  <TooltipContent><p>Cosmic Marshall</p></TooltipContent>
+                </Tooltip>
+              )}
+              <div className={`flex items-center text-sm font-bold ${auraDisplayColor}`}>
+                <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} />
+                <span>{profileData.aura} Aura</span>
+              </div>
             </div>
-          ) : (
-            // Edit Form
-            <form onSubmit={handleUpdateProfile} className="space-y-6 bg-card/30 backdrop-blur-sm p-4 md:p-6 rounded-lg mt-4">
+          </div>
+        </div>
+      
+        {/* Description or Edit Form Section */}
+        <div className="px-4 md:px-6 mt-6">
+          {isEditing && isOwnProfile ? (
+            <form onSubmit={handleUpdateProfile} className="space-y-6 bg-card/50 backdrop-blur-sm p-4 md:p-6 rounded-lg">
               <div>
                 <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
                 <Input id="newDisplayName" type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="Your new cosmic alias" className="bg-background/50 mt-1" required />
@@ -382,6 +371,19 @@ export default function UserProfilePage() {
                 <Button type="submit" disabled={isUpdatingProfile} className="glow-accent">{isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes</Button>
               </div>
             </form>
+          ) : (
+            <Card className="bg-card/50">
+              <CardContent className="pt-6">
+                <p className="text-foreground/80 prose prose-invert max-w-none">{profileData.description || "No description provided yet."}</p>
+                {isOwnProfile && (
+                  <div className="mt-6 sm:hidden"> {/* Mobile Logout Button */}
+                    <Button variant="outline" onClick={handleLogout} className="w-full rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">
+                      <LogOut className="mr-2 h-4 w-4" /> Logout
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       
@@ -462,5 +464,3 @@ export default function UserProfilePage() {
     </TooltipProvider>
   );
 }
-
-    
