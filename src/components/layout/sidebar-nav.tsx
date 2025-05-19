@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Swords, Users, Bell, UserCircle, LogOut, Settings, Rocket } from "lucide-react";
+import { Home, Swords, Users, Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/logo";
@@ -26,12 +26,6 @@ const mainNavItems: NavItem[] = [
   { href: "/friends", label: "Friends", icon: Users },
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
-
-const userNavItems: NavItem[] = [
- { href: "/profile/me", label: "Profile", icon: UserCircle },
- // { href: "/settings", label: "Settings", icon: Settings }, // Example for future
-];
-
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -74,25 +68,6 @@ export function SidebarNav() {
       </nav>
 
       <div className="mt-auto space-y-2">
-         <p className="px-4 text-xs text-muted-foreground uppercase tracking-wider">User</p>
-        {userNavItems.map((item) => {
-           const isActive = pathname.startsWith(item.href);
-           return (
-            <Link key={item.href} href={item.href} legacyBehavior>
-              <a
-                className={cn(
-                  "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 ease-in-out",
-                  isActive
-                    ? "bg-primary/20 text-primary font-semibold shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
-                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
-                <span>{item.label}</span>
-              </a>
-            </Link>
-           );
-        })}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -109,19 +84,20 @@ export function SidebarNav() {
           </TooltipContent>
         </Tooltip>
         {user && (
-          <div className="px-2 py-2 border-t border-border mt-2 text-sm text-muted-foreground flex items-center space-x-3">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user.photoURL || `https://placehold.co/40x40.png?text=${user.displayName?.[0] || 'U'}`} alt={user.displayName || 'User Avatar'} />
-              <AvatarFallback>{user.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
-            <div className="overflow-hidden">
-              <p className="font-semibold text-foreground truncate">@{user.displayName || "User"}</p>
-              <p className="truncate text-xs">{user.email}</p>
+          <Link href="/profile/me" className="block rounded-lg hover:bg-muted/50 transition-colors">
+            <div className="px-2 py-3 border-t border-border text-sm text-muted-foreground flex items-center space-x-3 cursor-pointer">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user.photoURL || `https://placehold.co/40x40.png?text=${user.displayName?.[0] || 'U'}`} alt={user.displayName || 'User Avatar'} />
+                <AvatarFallback>{user.displayName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="overflow-hidden">
+                <p className="font-semibold text-foreground truncate">@{user.displayName || "User"}</p>
+                <p className="truncate text-xs">{user.email}</p>
+              </div>
             </div>
-          </div>
+          </Link>
         )}
       </div>
     </aside>
   );
 }
-
