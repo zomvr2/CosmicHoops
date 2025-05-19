@@ -101,7 +101,7 @@ export default function StartMatchPage() {
       const notificationData = {
         userId: selectedFriendId, // Recipient
         type: 'match_invite' as 'match_invite',
-        message: `${user.displayName || 'A player'} has logged a match with you. Please confirm.`,
+        message: `has logged a match with you. Please confirm.`,
         relatedId: matchRef.id, // ID of the match document
         isRead: false,
         createdAt: serverTimestamp(),
@@ -211,4 +211,3 @@ export default function StartMatchPage() {
     </div>
   );
 }
-

@@ -169,7 +169,7 @@ export default function FriendsPage() {
       await addDoc(collection(db, 'notifications'), {
         userId: targetUserId,
         type: 'friend_request',
-        message: `${user.displayName || 'Someone'} sent you a friend request.`,
+        message: `sent you a friend request.`,
         relatedId: user.uid, // UID of the sender
         isRead: false,
         createdAt: serverTimestamp(),
@@ -203,10 +203,10 @@ export default function FriendsPage() {
         const friendUserRef = doc(db, 'users', fromUserId);
         batch.update(currentUserRef, { friends: arrayUnion(fromUserId) });
         batch.update(friendUserRef, { friends: arrayUnion(user.uid) });
-        notificationMessage = `${user.displayName || 'Someone'} accepted your friend request!`;
+        notificationMessage = `accepted your friend request!`;
         notificationType = 'friend_accepted';
       } else if (newStatus === 'declined' && fromUserId) {
-         notificationMessage = `${user.displayName || 'Someone'} declined your friend request.`;
+         notificationMessage = `declined your friend request.`;
          // notificationType = 'friend_declined'; // if you want to notify declines
       }
 
@@ -387,6 +387,3 @@ export default function FriendsPage() {
     </Tabs>
   );
 }
-
-
-    

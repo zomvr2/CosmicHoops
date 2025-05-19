@@ -112,7 +112,6 @@ export default function MatchDetailsPage() {
             const loserSnap = await getDoc(loserUserRef);
             if (loserSnap.exists()) {
                 const currentAura = loserSnap.data().aura || 0;
-                 // Aura can be negative
                 batch.update(loserUserRef, { aura: currentAura + auraLoss });
             }
         }
@@ -148,7 +147,7 @@ export default function MatchDetailsPage() {
          const p1Notification = {
             userId: matchDetails.player1Id,
             type: 'match_invite' as 'match_invite', 
-            message: `${currentUser.displayName || 'Opponent'} rejected the scores. Please discuss and re-log.`,
+            message: `rejected the scores for your match. Please discuss and re-log.`,
             relatedId: matchId,
             isRead: false,
             createdAt: serverTimestamp(),
