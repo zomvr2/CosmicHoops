@@ -326,8 +326,8 @@ export default function UserProfilePage() {
       </div>
 
       {/* Profile Content Card */}
-      <Card className="bg-card/70 backdrop-blur-md -mt-8 md:-mt-10 pt-8 md:pt-12"> {/* Adjust top margin to pull card content up */}
-        <CardContent className="pt-6 relative"> {/* Added relative for desktop buttons */}
+      <Card className="bg-card/70 backdrop-blur-md -mt-8 md:-mt-10 pt-8 md:pt-12">
+        <CardContent className="pt-6 relative">
           {isEditing && isOwnProfile ? (
             <form onSubmit={handleUpdateProfile} className="space-y-6">
               <div>
@@ -390,14 +390,11 @@ export default function UserProfilePage() {
             </form>
           ) : (
             <>
-              {/* Desktop Edit/Logout Buttons */}
+              {/* Desktop: Edit Profile Button (Top Right) */}
               {isOwnProfile && (
-                <div className="hidden sm:flex sm:absolute sm:top-6 sm:right-6 sm:gap-2">
+                <div className="hidden sm:flex sm:absolute sm:top-6 sm:right-6">
                   <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
-                  </Button>
-                  <Button variant="outline" onClick={handleLogout} className="text-red-400 border-red-400 hover:bg-red-400/10">
-                     <LogOut className="mr-2 h-4 w-4" /> Logout
                   </Button>
                 </div>
               )}
@@ -414,13 +411,13 @@ export default function UserProfilePage() {
                  <p className="text-muted-foreground italic mb-6">No description provided yet.</p>
               )}
 
-              {/* Mobile Edit/Logout Buttons */}
+              {/* Mobile: Edit Profile & Logout Buttons (Below Description, 50/50) */}
               {isOwnProfile && (
-                <div className="sm:hidden flex flex-col gap-3 w-full mt-4"> {/* Added mt-4 for spacing after description */}
-                  <Button variant="outline" onClick={handleToggleEdit} className="w-full border-accent text-accent hover:bg-accent/10">
+                <div className="sm:hidden flex gap-3 w-full mt-4">
+                  <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 border-accent text-accent hover:bg-accent/10">
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
-                  <Button variant="outline" onClick={handleLogout} className="w-full text-red-400 border-red-400 hover:bg-red-400/10">
+                  <Button variant="outline" onClick={handleLogout} className="w-1/2 text-red-400 border-red-400 hover:bg-red-400/10">
                      <LogOut className="mr-2 h-4 w-4" /> Logout
                   </Button>
                 </div>
