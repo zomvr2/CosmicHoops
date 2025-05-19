@@ -262,15 +262,18 @@ export default function FriendsPage() {
           <CardDescription>Manage your allies and rivals across the galaxy.</CardDescription>
         </CardHeader>
         <CardContent className="pt-2 pb-4 px-4 sm:px-6">
-          <TabsList className="flex flex-col sm:flex-row sm:justify-center gap-2 w-full bg-transparent p-0">
-            <TabsTrigger value="my-friends" className="w-full sm:w-auto justify-center px-4 py-2 text-base">
-              <Users className="mr-2 h-5 w-5" /> My Friends
+          <TabsList className="flex flex-row justify-around sm:justify-start items-center w-full bg-transparent p-0 sm:gap-2">
+            <TabsTrigger value="my-friends" className="flex items-center justify-center p-2 sm:px-4 sm:py-2 text-base rounded-lg hover:bg-muted/50 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+              <Users className="h-5 w-5" />
+              <span className="hidden sm:ml-2 sm:inline">My Friends</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="w-full sm:w-auto justify-center px-4 py-2 text-base">
-              <Inbox className="mr-2 h-5 w-5" /> Friend Requests ({friendRequests.length})
+            <TabsTrigger value="requests" className="flex items-center justify-center p-2 sm:px-4 sm:py-2 text-base rounded-lg hover:bg-muted/50 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+              <Inbox className="mr-0 sm:mr-2 h-5 w-5" />
+              <span className="hidden sm:ml-2 sm:inline">Friend Requests ({friendRequests.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="add-friend" className="w-full sm:w-auto justify-center px-4 py-2 text-base">
-              <UserPlus className="mr-2 h-5 w-5" /> Add Friend
+            <TabsTrigger value="add-friend" className="flex items-center justify-center p-2 sm:px-4 sm:py-2 text-base rounded-lg hover:bg-muted/50 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+              <UserPlus className="h-5 w-5" />
+              <span className="hidden sm:ml-2 sm:inline">Add Friend</span>
             </TabsTrigger>
           </TabsList>
         </CardContent>
@@ -384,3 +387,6 @@ export default function FriendsPage() {
     </Tabs>
   );
 }
+
+
+    
