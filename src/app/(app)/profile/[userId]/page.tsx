@@ -315,7 +315,7 @@ export default function UserProfilePage() {
               )}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 mb-4">
             <h1 className="text-2xl md:text-3xl font-bold">{profileData.displayName}</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground mt-1">
               <p>@{profileData.displayName}</p>
