@@ -383,7 +383,7 @@ export default function UserProfilePage() {
           </div>
 
           {/* Username and Aura */}
-          <div className="mt-1 flex justify-between items-center">
+          <div className="mt-1 flex justify-start gap-2 items-center mb-3">
             <p className="text-muted-foreground">@{profileData.displayName}</p>
             <div className={`flex items-center font-bold ${auraDisplayColor}`}>
               <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} aria-hidden="true"/>
