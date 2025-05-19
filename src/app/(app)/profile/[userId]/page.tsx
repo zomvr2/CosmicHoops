@@ -326,10 +326,10 @@ export default function UserProfilePage() {
       </div>
 
       {/* Profile Content Card */}
-      <Card className="bg-card/70 backdrop-blur-md -mt-8 md:-mt-10 pt-8 md:pt-12">
-        <CardContent className="pt-6 relative">
+      <Card className="bg-card/70 backdrop-blur-md -mt-8 md:-mt-10">
+        <CardContent className="pt-4 relative">
           {isEditing && isOwnProfile ? (
-            <form onSubmit={handleUpdateProfile} className="space-y-6">
+            <form onSubmit={handleUpdateProfile} className="space-y-6 pt-2"> {/* Added pt-2 here for spacing when form is visible */}
               <div>
                 <Label htmlFor="newDisplayName" className="text-foreground/80">Username</Label>
                 <Input
@@ -392,7 +392,7 @@ export default function UserProfilePage() {
             <>
               {/* Desktop: Edit Profile Button (Top Right) */}
               {isOwnProfile && (
-                <div className="hidden sm:flex sm:absolute sm:top-6 sm:right-6">
+                <div className="hidden sm:flex sm:absolute sm:top-4 sm:right-4">
                   <Button variant="outline" onClick={handleToggleEdit} className="border-accent text-accent hover:bg-accent/10">
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
@@ -413,7 +413,7 @@ export default function UserProfilePage() {
 
               {/* Mobile: Edit Profile & Logout Buttons (Below Description, 50/50) */}
               {isOwnProfile && (
-                <div className="sm:hidden flex gap-3 w-full mt-4">
+                <div className="flex gap-3 w-full mt-4 sm:hidden">
                   <Button variant="outline" onClick={handleToggleEdit} className="w-1/2 border-accent text-accent hover:bg-accent/10">
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
@@ -534,3 +534,5 @@ export default function UserProfilePage() {
   );
 }
 
+
+    
