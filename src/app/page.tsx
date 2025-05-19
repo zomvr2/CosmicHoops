@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
 import Image from 'next/image';
-import { ChevronRight, Swords, Sparkles, MessageSquareText, Users, CheckCircle, Rocket, Zap } from 'lucide-react';
+import { ChevronRight, Swords, Sparkles, MessageSquareText, Users, CheckCircle, Rocket, Zap, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from "@/lib/utils";
 
@@ -74,21 +74,16 @@ export default function HomePage() {
             <p className="mx-auto max-w-[700px] text-foreground/80 md:text-xl mt-6 mb-10">
               Log your 1v1 basketball matches, challenge friends, climb the leaderboard, and get AI-powered dramatic recaps of your epic clashes. The galaxy is your court!
             </p>
-            <div className="flex justify-center items-center h-48 md:h-64 lg:h-72 my-12">
-              <Image
-                src="https://placehold.co/600x300.png"
-                alt="Cosmic Hoops abstract visual"
-                width={600}
-                height={300}
-                data-ai-hint="basketball space abstract glow"
-                className="rounded-xl shadow-2xl glow-accent opacity-75 object-cover"
-                priority
-              />
-            </div>
+            
             <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center">
               <Button size="lg" asChild className="glow-primary hover:opacity-90 transition-opacity">
-                <Link href="/auth?mode=signup">Get Started for Free</Link>
+                <Link href="/auth?mode=signup">Claim Your Court Now</Link>
               </Button>
+            </div>
+
+            <div className="mt-24 text-center"> {/* Increased top margin for "Keep scrolling" */}
+              <p className="text-sm text-muted-foreground mb-2">Keep scrolling to discover more</p>
+              <ArrowDown className="h-6 w-6 mx-auto text-primary animate-bounce" />
             </div>
           </div>
         </section>
@@ -189,6 +184,6 @@ export default function HomePage() {
     </div>
   );
 }
-
+    
 
     
