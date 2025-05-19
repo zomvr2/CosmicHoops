@@ -1,11 +1,14 @@
 
+"use client";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
 import Image from 'next/image';
-import { ChevronRight, Swords, Sparkles, MessageSquareText, Users, CheckCircle, Rocket, Zap, ArrowDown } from 'lucide-react';
+import { ChevronRight, Swords, Sparkles, MessageSquareText, Users, CheckCircle, Rocket, Zap, ArrowDown, Menu } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from "@/lib/utils";
+import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import React from 'react'; // Import React for useState if needed, though Sheet may handle its own state
 
 interface FeatureCardProps {
   icon: React.ElementType;
@@ -37,7 +40,7 @@ export default function HomePage() {
         <Link href="/" className="flex items-center justify-center" prefetch={false}>
           <Logo size="small" className="text-2xl" />
         </Link>
-        <nav className="ml-auto flex items-center gap-4 sm:gap-6">
+        <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
           <Link className="text-sm font-medium hover:text-primary transition-colors" href="#features" prefetch={false}>
             Features
           </Link>
@@ -48,10 +51,46 @@ export default function HomePage() {
             <Link href="/auth?mode=signup">Sign In / Sign Up</Link>
           </Button>
         </nav>
+        <div className="ml-auto md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-card">
+              <div className="p-6">
+                <Link href="/" className="mb-6 block">
+                  <Logo size="small" />
+                </Link>
+                <nav className="flex flex-col space-y-4">
+                  <Link
+                    href="#features"
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    prefetch={false}
+                  >
+                    Features
+                  </Link>
+                  <Link
+                    href="#how-it-works"
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    prefetch={false}
+                  >
+                    How It Works
+                  </Link>
+                  <Button asChild className="glow-primary hover:opacity-90 transition-opacity mt-4">
+                    <Link href="/auth?mode=signup">Sign In / Sign Up</Link>
+                  </Button>
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-20 lg:py-28 xl:py-32 flex flex-col items-center text-center relative overflow-hidden">
+        <section className="w-full py-12 md:py-20 lg:py-24 xl:py-28 flex flex-col items-center text-center relative overflow-hidden">
            <div
             aria-hidden="true"
             className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 transition-opacity duration-500 group-hover:opacity-50 dark:opacity-20"
@@ -81,7 +120,7 @@ export default function HomePage() {
               </Button>
             </div>
 
-            <div className="mt-16 text-center"> {/* Reduced top margin */}
+            <div className="mt-12 text-center"> {/* Reduced top margin */}
               <p className="text-sm text-muted-foreground mb-2">Keep scrolling to discover more</p>
               <ArrowDown className="h-6 w-6 mx-auto text-primary animate-bounce" />
             </div>
@@ -97,7 +136,7 @@ export default function HomePage() {
                 Everything you need to take your friendly rivalries to a cosmic scale.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
               <FeatureCard
                 icon={Swords}
                 title="Log Every Clash"
@@ -184,6 +223,4 @@ export default function HomePage() {
     </div>
   );
 }
-    
-
     
