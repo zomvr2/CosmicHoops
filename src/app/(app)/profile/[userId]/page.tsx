@@ -67,7 +67,7 @@ export default function UserProfilePage() {
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [newFullName, setNewFullName] = useState('');
   const [newDisplayName, setNewDisplayName] = useState('');
@@ -78,13 +78,13 @@ export default function UserProfilePage() {
 
   const [h2hStats, setH2hStats] = useState<H2HStats | null>(null);
   const [isLoadingH2H, setIsLoadingH2H] = useState(false);
-  
+
   const rawPageUserIdParam = params?.userId as string | undefined;
 
   useEffect(() => {
     const fetchProfileData = async () => {
       setIsLoading(true);
-      
+
       let targetUserId: string | undefined = undefined;
       if (rawPageUserIdParam === 'me' && currentUser) {
         targetUserId = currentUser.uid;
@@ -94,10 +94,10 @@ export default function UserProfilePage() {
 
       if (!targetUserId) {
         if (!authLoading && rawPageUserIdParam === 'me' && !currentUser) {
-          router.push('/auth'); 
+          router.push('/auth');
         } else if (!authLoading && !rawPageUserIdParam) {
-            toast({ title: "Error", description: "User ID not provided.", variant: "destructive" });
-            router.push('/dashboard');
+          toast({ title: "Error", description: "User ID not provided.", variant: "destructive" });
+          router.push('/dashboard');
         }
         if (!authLoading) setIsLoading(false);
         return;
@@ -114,7 +114,7 @@ export default function UserProfilePage() {
           setNewDisplayName(data.displayName || '');
           setNewAvatarUrl(data.avatarUrl || DEFAULT_AVATAR_URL);
           setNewDescription(data.description || '');
-          setNewBannerUrl(data.bannerUrl || ''); 
+          setNewBannerUrl(data.bannerUrl || '');
         } else {
           toast({ title: "Error", description: "User profile not found.", variant: "destructive" });
           router.push('/dashboard');
@@ -123,18 +123,18 @@ export default function UserProfilePage() {
 
         const q1 = query(collection(db, 'matches'), where('player1Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
         const q2 = query(collection(db, 'matches'), where('player2Id', '==', targetUserId), where('status', '==', 'confirmed'), orderBy('createdAt', 'desc'));
-        
+
         const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        
+
         const matches: MatchData[] = [];
         snap1.forEach(doc => matches.push({ id: doc.id, ...doc.data() } as MatchData));
         snap2.forEach(doc => {
           if (!matches.find(m => m.id === doc.id)) {
-            matches.push({ id: doc.id, ...doc.data()} as MatchData);
+            matches.push({ id: doc.id, ...doc.data() } as MatchData);
           }
         });
-        
-        matches.sort((a,b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+
+        matches.sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
         setMatchHistory(matches);
 
       } catch (error) {
@@ -145,8 +145,8 @@ export default function UserProfilePage() {
       }
     };
 
-    if (!authLoading) { 
-        fetchProfileData();
+    if (!authLoading) {
+      fetchProfileData();
     }
   }, [rawPageUserIdParam, currentUser, authLoading, toast, router]);
 
@@ -168,9 +168,9 @@ export default function UserProfilePage() {
         snap2.forEach(doc => h2hMatchesRaw.push({ id: doc.id, ...doc.data() } as MatchData));
         const h2hMatchIds = new Set<string>();
         const h2hMatches = h2hMatchesRaw.filter(match => {
-            if (h2hMatchIds.has(match.id)) return false;
-            h2hMatchIds.add(match.id);
-            return true;
+          if (h2hMatchIds.has(match.id)) return false;
+          h2hMatchIds.add(match.id);
+          return true;
         });
         let currentUserWins = 0;
         let viewedUserWins = 0;
@@ -210,7 +210,7 @@ export default function UserProfilePage() {
       toast({ title: "Validation Error", description: "Full Name cannot exceed 50 characters.", variant: "destructive" });
       return;
     }
-    
+
     const trimmedNewDisplayName = newDisplayName.trim();
     const normalizedNewUsername = trimmedNewDisplayName.toLowerCase();
 
@@ -219,8 +219,8 @@ export default function UserProfilePage() {
       return;
     }
     if (!USERNAME_REGEX.test(normalizedNewUsername)) {
-        toast({ title: "Validation Error", description: "Username must be 3-20 characters and can only contain lowercase letters, numbers, periods (.), and underscores (_).", variant: "destructive" });
-        return;
+      toast({ title: "Validation Error", description: "Username must be 3-20 characters and can only contain lowercase letters, numbers, periods (.), and underscores (_).", variant: "destructive" });
+      return;
     }
 
     setIsUpdatingProfile(true);
@@ -232,7 +232,7 @@ export default function UserProfilePage() {
         if (!querySnapshot.empty) {
           let nameTaken = false;
           querySnapshot.forEach((doc) => {
-            if (doc.id !== currentUser.uid) { 
+            if (doc.id !== currentUser.uid) {
               nameTaken = true;
             }
           });
@@ -243,38 +243,38 @@ export default function UserProfilePage() {
           }
         }
         if (auth.currentUser && auth.currentUser.displayName !== normalizedNewUsername) {
-            await updateFirebaseProfile(auth.currentUser, { 
-              displayName: normalizedNewUsername,
-            });
+          await updateFirebaseProfile(auth.currentUser, {
+            displayName: normalizedNewUsername,
+          });
         }
       }
 
       const currentAuthPhotoURL = auth.currentUser?.photoURL || DEFAULT_AVATAR_URL;
       const newPhotoURLToSet = newAvatarUrl.trim() || DEFAULT_AVATAR_URL;
       if (auth.currentUser && newPhotoURLToSet !== currentAuthPhotoURL) {
-         await updateFirebaseProfile(auth.currentUser, { 
-            photoURL: newPhotoURLToSet, 
+        await updateFirebaseProfile(auth.currentUser, {
+          photoURL: newPhotoURLToSet,
         });
       }
 
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, {
         fullName: trimmedNewFullName,
-        displayName: normalizedNewUsername, 
-        avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL, 
+        displayName: normalizedNewUsername,
+        avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL,
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim(),
       });
 
-      setProfileData(prev => prev ? { 
-        ...prev, 
+      setProfileData(prev => prev ? {
+        ...prev,
         fullName: trimmedNewFullName,
-        displayName: normalizedNewUsername, 
+        displayName: normalizedNewUsername,
         avatarUrl: newAvatarUrl.trim() || DEFAULT_AVATAR_URL,
         description: newDescription.trim(),
         bannerUrl: newBannerUrl.trim(),
       } : null);
-      
+
       toast({ title: "Success", description: "Profile updated successfully!" });
       setIsEditing(false);
     } catch (error: any) {
@@ -291,10 +291,10 @@ export default function UserProfilePage() {
     router.push("/");
   };
 
-  if (isLoading || authLoading ) {
+  if (isLoading || authLoading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
-  
+
   if (!profileData) {
     return <div className="text-center py-10">User not found or an error occurred.</div>;
   }
@@ -311,29 +311,29 @@ export default function UserProfilePage() {
         {/* Banner Section */}
         <div className="h-40 md:h-56 bg-gradient-to-br from-primary/30 via-purple-600/30 to-accent/30 relative rounded-lg overflow-hidden">
           {currentBannerUrl && (
-              <Image 
-                src={currentBannerUrl} 
-                alt={mainDisplayName ? `${mainDisplayName}'s banner` : "User banner"}
-                layout="fill" 
-                objectFit="cover" 
-                priority={true}
-                data-ai-hint="abstract space"
-              />
+            <Image
+              src={currentBannerUrl}
+              alt={mainDisplayName ? `${mainDisplayName}'s banner` : "User banner"}
+              layout="fill"
+              objectFit="cover"
+              priority={true}
+              data-ai-hint="abstract space"
+            />
           )}
           {isOwnProfile && !isEditing && (
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                onClick={handleToggleEdit} 
+              <Button
+                variant="outline"
+                onClick={handleToggleEdit}
                 className="bg-background/70 hover:bg-background/90 text-foreground border-foreground/30 p-2 rounded-lg text-xs"
               >
                 <Edit3 className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Edit Profile</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="icon"
-                onClick={handleLogout} 
+                onClick={handleLogout}
                 className="sm:hidden bg-background/70 hover:bg-background/90 text-red-400 border-red-400/30 p-2 rounded-lg"
                 aria-label="Logout"
               >
@@ -342,16 +342,16 @@ export default function UserProfilePage() {
             </div>
           )}
         </div>
-        
+
         {/* Main Content Area Below Banner */}
         <div className="px-4 md:px-6">
-            {/* Avatar - pulled up to overlap banner */}
+          {/* Avatar - pulled up to overlap banner */}
           <div className="relative -mt-16 md:-mt-20">
             {isEditing && isOwnProfile ? (
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
-                  <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
-                </div>
-              ) : (
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted border-4 border-background shadow-lg flex items-center justify-center text-muted-foreground">
+                <UserCircle className="w-16 h-16 md:w-20 md:h-20" />
+              </div>
+            ) : (
               <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
                 <AvatarImage src={profileData.avatarUrl || DEFAULT_AVATAR_URL} alt={mainDisplayName} />
                 <AvatarFallback className="text-4xl">{mainDisplayName?.[0].toUpperCase() || 'P'}</AvatarFallback>
@@ -386,12 +386,12 @@ export default function UserProfilePage() {
           <div className="mt-1 flex justify-start gap-2 items-center mb-3">
             <p className="text-muted-foreground">@{profileData.displayName}</p>
             <div className={`flex items-center font-bold ${auraDisplayColor}`}>
-              <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} aria-hidden="true"/>
+              <Sparkles className={`w-4 h-4 mr-1 ${auraIconColor}`} aria-hidden="true" />
               <span>{profileData.aura} Aura</span>
             </div>
           </div>
         </div>
-      
+
         {/* Description Card or Edit Form Section */}
         <div className="px-4 md:px-6 mt-8">
           <Card className="bg-card/70 backdrop-blur-md">
@@ -429,21 +429,12 @@ export default function UserProfilePage() {
                   </div>
                 </form>
               ) : (
-                <>
-                  <p className="text-foreground/80 prose prose-invert max-w-none">{profileData.description || "No description provided yet."}</p>
-                   {isOwnProfile && (
-                    <CardFooter className="sm:hidden px-0 pb-0 pt-6"> {/* Mobile Logout Button inside card */}
-                      <Button variant="outline" onClick={handleLogout} className="w-full rounded-full text-red-400 border-red-400/50 hover:border-red-400 hover:text-red-300">
-                        <LogOut className="mr-2 h-4 w-4" /> Logout
-                      </Button>
-                    </CardFooter>
-                  )}
-                </>
+                <p className="text-foreground/80 prose prose-invert max-w-none">{profileData.description || "No description provided yet."}</p>
               )}
             </CardContent>
           </Card>
         </div>
-      
+
         {/* H2H/Match History cards */}
         <div className="px-4 md:px-6 mt-6 space-y-8 pb-8">
           {!isOwnProfile && currentUser && (
@@ -452,25 +443,25 @@ export default function UserProfilePage() {
               <CardContent>
                 {isLoadingH2H ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                   : h2hStats && h2hStats.totalPlayed > 0 ? (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Total Matches:</span><span className="font-semibold">{h2hStats.totalPlayed}</span></div>
-                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Your Wins:</span><span className="font-semibold text-green-400">{h2hStats.currentUserWins}</span></div>
-                    <div className="flex justify-between items-center"><span className="text-muted-foreground">@{profileData.displayName}'s Wins:</span><span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span></div>
-                    {h2hStats.totalPlayed > 0 && (
-                      <div className="pt-2">
-                        <Progress value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`} />
-                         <div className="flex justify-between text-xs mt-1">
-                           <span className="text-green-400">You ({h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
-                           <span className="text-red-400">@{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center"><span className="text-muted-foreground">Total Matches:</span><span className="font-semibold">{h2hStats.totalPlayed}</span></div>
+                      <div className="flex justify-between items-center"><span className="text-muted-foreground">Your Wins:</span><span className="font-semibold text-green-400">{h2hStats.currentUserWins}</span></div>
+                      <div className="flex justify-between items-center"><span className="text-muted-foreground">@{profileData.displayName}'s Wins:</span><span className="font-semibold text-red-400">{h2hStats.viewedUserWins}</span></div>
+                      {h2hStats.totalPlayed > 0 && (
+                        <div className="pt-2">
+                          <Progress value={h2hStats.totalPlayed > 0 ? (h2hStats.currentUserWins / h2hStats.totalPlayed) * 100 : 0} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-primary" aria-label={`Your win rate: ${h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%`} />
+                          <div className="flex justify-between text-xs mt-1">
+                            <span className="text-green-400">You ({h2hStats.totalPlayed > 0 ? ((h2hStats.currentUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                            <span className="text-red-400">@{profileData.displayName} ({h2hStats.totalPlayed > 0 ? ((h2hStats.viewedUserWins / h2hStats.totalPlayed) * 100).toFixed(0) : 0}%)</span>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ) : h2hStats && h2hStats.totalPlayed === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No matches played against each other yet.</p>
-                ) : !isLoadingH2H ? (
-                  <p className="text-muted-foreground text-center py-4">Could not load head-to-head stats.</p>
-                ) : null}
+                      )}
+                    </div>
+                  ) : h2hStats && h2hStats.totalPlayed === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No matches played against each other yet.</p>
+                  ) : !isLoadingH2H ? (
+                    <p className="text-muted-foreground text-center py-4">Could not load head-to-head stats.</p>
+                  ) : null}
               </CardContent>
             </Card>
           )}
@@ -499,7 +490,7 @@ export default function UserProfilePage() {
                             <p className="text-xs text-muted-foreground">{matchDate}</p>
                           </div>
                           <div className="mt-2 sm:mt-0">
-                             <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/10"><Link href={`/match/${match.id}`}>View Recap</Link></Button>
+                            <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/10"><Link href={`/match/${match.id}`}>View Recap</Link></Button>
                           </div>
                         </div>
                         {match.recap && (
@@ -518,4 +509,4 @@ export default function UserProfilePage() {
   );
 }
 
-    
+
